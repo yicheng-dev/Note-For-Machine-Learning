@@ -213,6 +213,53 @@
 							\item 在非均等代价下， ``代价曲线''（cost curve）可以刻画期望总体代价。设$p$是样例为正例的概率。横轴为正例概率代价\[P(+)cost = \frac{p\times cost_{01}}{p\times cost_{01}+(1-p)\times cost_{10}}\]纵轴为取值为$[0,1]$的归一化代价\[cost_{norm}=\frac{\mathrm{FNR}\times p\times cost_{01}+\mathrm{FPR}\times(1-p)\times cost_{10}}{p\times cost_{01}+(1-p)\times cost_{10}}\]
 							\item 代价曲线的绘制方法：将ROC曲线上的每一点转化为代价平面上的一条线段，取所有线段的下界，围成的面积即为所有条件下学习器的期望总体代价。
 						\end{itemize}
+				\subsection{比较检验}
+					
+					本节默认以错误率$\epsilon$为性能度量。
+					\subsubsection{假设检验}
+						\begin{itemize}
+							\item 设一个学习器的泛化错误率为$\epsilon$，在$m$个样本中的测试错误率为$\hat{\epsilon}$，则其被测得测试错误率为$\hat{\epsilon}$的概率为\[P(\hat{\epsilon};\epsilon)=\binom{m}{\hat{\epsilon}\times m}\epsilon^{\hat{\epsilon}\times m}(1-\epsilon)^{m-\hat{\epsilon}\times m}\]它在$\epsilon=\hat{\epsilon}$时最大。
+							\item 二项检验：假设$\epsilon\le\epsilon_0$，则在$1-\alpha$的概率内所能观测到的最大错误率为\[\sum_{i=\epsilon_0\times m+1}^{m}\binom{m}{i}\epsilon^i(1-\epsilon)^{m-i}<\alpha\]\[\bar{\epsilon}=\mathrm{max}\epsilon\]若测试错误率$\hat{\epsilon}$小于临界值$\bar{\epsilon}$，则能以$1-\alpha$的置信度认为学习器的泛化错误率不大于$\epsilon_0$，否则假设被拒绝。
+							\item $t$检验：若得到了$k$个测试错误率$\hat{\epsilon}_1,\hat{\epsilon}_2,\dots,\hat{\epsilon}_k$，则平均测试错误率$\mu$和方差$\sigma^2$为\[\mu=\frac{1}{k}\sum_{i=1}^{k}\hat{\epsilon}_i\]\[\sigma^2=\frac{1}{k-1}\sum_{i=1}^{k}(\hat{\epsilon}_i-\mu)^2\]它们可看作泛化错误率$\epsilon_0$的独立采样，则变量\[\tau_t=\frac{\sqrt{k}(\mu-\epsilon_0)}{\sigma}\]服从自由度为$k-1$的$t$分布。若$|\mu-\epsilon_0|$位于$[t_{-\alpha/2},t_{\alpha/2}]$内，则接受假设$\mu=\epsilon_0$，否则拒绝该假设。
+						\end{itemize}
+					\subsubsection{交叉验证$t$检验}
+						\begin{itemize}
+							\item $k$折交叉验证``成对$t$检验''：对每对结果求差$\Delta_i=\epsilon_i^A-\epsilon_i^B$，若两个学习器性能相同，则差值均值为0。做$t$检验，在显著度$\alpha$下，若\[\tau_t=|\frac{\sqrt{k}\mu}{\sigma}|<t_{\alpha/2,k-1}\]则接受假设。其中$t_{\alpha/2,k-1}$指自由度为$k-1$的$t$分布上尾部累积分布为$\alpha/2$的临界值。
+							\item 考虑到交叉验证法等实验估计方法，不同轮次的训练集会有一定程度的重叠，导致测试错误率并不独立。故可采用$5\times2$交叉验证法（5次2折交叉验证）。每次2折交叉验证之前随机将数据打乱，使得5次交叉验证中的数据划分不重复。设$\Delta_i^k$表示第$i$次第$k$上的差值。\[\mu=0.5(\Delta_1^1+\Delta_1^2)\]\[\sigma_i^2=\big(\Delta_i^1-\frac{\Delta_i^1+\Delta_i^2}{2}\big)^2+\big(\Delta_i^2-\frac{\Delta_i^1+\Delta_i^2}{2}\big)^2\]变量\[\tau_t=\frac{\mu}{\sqrt{0.2\sum_{i=1}^{5}\sigma_i^2}}\]服从自由度为5的$t$分布，其双边检验的临界值为$t_{\alpha/2,5}$。
+						\end{itemize}
+					\subsubsection{McNemar检验}
+						
+						对于二分类问题，可统计两个学习器A和B的分类结果样本数差别，列出``列联表''（contingency table）\begin{center}
+							\begin{tabular}{|c|c|c|}
+								\hline
+								\multirow{2}{*}{算法B} & \multicolumn{2}{c|}{算法A} \\ \cline{2-3} 
+								& 正确          & 错误         \\ \hline
+								正确                   & $e_{00}$    & $e_{01}$   \\ \hline
+								错误                   & $e_{10}$    & $e_{11}$   \\ \hline
+							\end{tabular}
+						\end{center}
+					
+						假设两学习器性能相同，则$e_{01}=e_{10}$，于是$|e_{01}-e_{10}|$服从正态分布，变量\[\tau_{\chi^2}=\frac{(|e_{01}-e_{10}|-1)^2}{e_{01}+e_{10}}\]服从自由度为1的$\chi^2$分布，若其小于临界值$\chi_\alpha^2$则接受假设，否则拒绝假设，较小者性能更优。
+					\subsubsection{Friedman检验与Nemenyi后续检验}
+						\begin{itemize}
+							\item 在多个数据集上比较算法。
+							\item 算法排序：使用留出法或交叉验证法得到每个算法在每个数据集上的测试结果，然后在每个数据集上根据测试性能由好到坏排序，序值从1递增，若相同则平分序值。
+							\item ``原始Friedman检验''：假定在$N$个数据集上比较$k$个算法，令$r_i$表示第$i$个算法的平均序值，暂不考虑平分序值，则$r_i$均值为$(k+1)/2$，方差为$(k^2-1)/12$。变量\[\tau_{\chi^2}=\frac{k-1}{k}\cdot\frac{12N}{k^2-1}\sum_{i=1}^{k}\big(r_i-\frac{k+1}{2}\big)^2=\frac{12N}{k(k+1)}\bigg(\sum_{i=1}^{k}r_i^2-\frac{k(k+1)^2}{4}\bigg)\]当$k$和$N$都较大时服从自由度为$k-1$的$\chi^2$分布。
+							\item Friedman检验：变量\[\tau_F=\frac{(N-1)\tau_{\chi^2}}{N(k-1)-\tau_{\chi^2}}\]服从自由度为$k-1$和$(k-1)(N-1)$的F分布。
+							\item Nemenyi检验：若``所有算法的性能相同''这一假设被拒绝，此时计算出平均序值差别的临界值域\[CD=q_{\alpha}\sqrt{\frac{k(k+1)}{6N}}\]若某两个算法的平均序值之差超出了$CD$，则以相应的置信度拒绝``这两个算法性能相同''这一假设。
+							\item Friedman检验图：横轴为平均序值，纵轴为各个算法，对每个算法以一个圆点表示平均序值，以圆点为中心的横线段表示临界值域的大小。若两个算法的横线段有交叠，则说明它们没有显著区别，否则可以进行显著比较。
+						\end{itemize}
+				\subsection{偏差与方差}
+					\begin{itemize}
+						\item 偏差-方差分解：对学习算法的期望泛化错误率进行拆解。
+						\item 学习算法的期望预测\[\bar{f}(\bm{x})=\mathbb{E}_D[f(\bm{x};D)]\]
+						\item 使用样本数相同的不同训练集产生的方差\[var(\bm{x})=\mathbb{E}\big[(f(\bm{x};D)-\bar{f}(\bm{x})^2\big]\]
+						\item 噪声\[\varepsilon^2=\mathbb{E}_D\big[(y_D-y)^2\big]\]
+						\item 偏差（期望输出与真实标记的差别）\[bias^2(\bm{x})=\big(\bar{f}(\bm{x})-y\big)^2\]
+						\item 假定$\mathbb{E}_D[y_D-y]=0$，则可通过多项式展开得到\[E(f;D)=\mathbb{E}_D\big[(f(\bm{x};D)-y_D)^2\big]=bias^2(\bm{x})+var(\bm{x})+\varepsilon^2\]泛化误差可分解为偏差、方差与噪声之和。
+						\item 偏差：学习算法本身的拟合能力；方差：数据的充分性；噪声：学习问题本身的难度
+						\item 偏差-方差窘境（bias-variance dilemma）：训练不足时偏差主导，训练加深时方差主导，训练充足时容易发生过拟合。
+					\end{itemize}
 			\section{线性模型}
 			\section{决策树}
 			\section{神经网络}
