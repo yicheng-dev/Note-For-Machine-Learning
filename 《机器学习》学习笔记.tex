@@ -1,0 +1,231 @@
+\documentclass{ctexart}
+
+\usepackage{xeCJK}
+\usepackage[utf8]{inputenc}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{amssymb}
+\usepackage{newfloat}
+\usepackage{setspace}
+\usepackage{tikz}
+\usepackage{bm}
+\usepackage{multirow}
+\usepackage{enumerate}
+\usepackage{mathrsfs}
+\usepackage{listings}
+\usepackage{fancyhdr}
+\allowdisplaybreaks[4]
+\usetikzlibrary{arrows,graphs}
+\usetikzlibrary{graphs}
+\usetikzlibrary{graphs.standard}
+\pagestyle{fancy}
+\fancyhead[L]{Machine Learning}
+
+\usetikzlibrary {positioning}
+\definecolor {processblue}{cmyk}{0.96,0,0,0}
+\setCJKmainfont{STKaiti}
+\begin{document}
+			\title{《机器学习》读书笔记}
+			\author{黄奕诚}
+			\date{}
+			\maketitle
+			
+			\tableofcontents
+			\newpage
+			\section{绪论}
+				\subsection{引言}
+					\begin{itemize}
+						\item 机器学习致力于研究如何通过计算的手段，利用经验来改善系统自身的性能。
+						\item 机器学习研究的主要内容：在计算机上从数据中产生``模型''的算法，即``学习算法''。
+					\end{itemize}
+				\subsection{基本术语}
+					\begin{itemize}
+						 \item 数据集（data set）：一组记录的集合
+						 \item 示例（instance）/样本（sample）：每条记录，即关于一个事件或对象的描述
+						 \item 属性（attribute）/特征（feature）：反映事件或对象在某方面的表现或性质的事项
+						 \item 属性值（attribute value）：属性上的取值
+						 \item 属性空间（attribute space）/样本空间（sample space）/输入空间：属性张成的空间，记为$\mathcal{X}$
+						 \item 特征向量（feature vector）：一个示例（在样本空间对应的坐标向量）
+						 \item 学习（learning）/训练（training）：从数据中学得模型的过程
+						 \item 训练数据（training data）：训练过程中使用的数据
+						 \item 训练样本（training sample）：训练数据中的每个样本
+						 \item 训练集（training set）：训练样本组成的集合
+						 \item 假设（hypothesis）：对应了关于数据的某种潜在规律的学得模型
+						 \item 真实（ground-truth）：潜在规律自身
+						 \item 学习器（learner）：学习算法在给定数据和参数空间上的实例化
+						 \item 标记（label）：关于示例结果的信息
+						 \item 样例（example）：拥有标记信息的示例
+						 \item 标记空间（label space）/输出空间：所有标记的集合，记为$\mathcal{Y}$
+						 \item 分类（classification）：预测的是离散值的学习任务（二分类$\mathcal{Y}=\{-1,+1\}\textrm{或}\{0,1\}$；三分类$|\mathcal{Y}|>2$）
+						 \item 回归（regression）：预测的是连续值的学习任务（$\mathcal{Y}=\mathbb{R}$）
+						 \item 测试（testing）：使用学得模型进行预测的过程
+						 \item 测试样本（testing sample）：被预测的样本
+						 \item 无监督学习（unsupervised learning）：训练数据中没有标记信息的学习任务，代表是聚类（clustering）
+						 \item 监督学习（supervised learning）：训练数据中具有标记信息的学习任务，代表是分类和回归
+						 \item 泛化（generalization）能力：学得模型适用于新样本的能力
+					\end{itemize}
+				\subsection{假设空间}
+					\begin{itemize}
+						\item ``从样例中学习''是一个归纳的过程。
+						\item 可以把学习过程看作一个在所有假设组成的空间中进行搜索的过程，搜索目标是找到与训练集``匹配''（fit）的假设。
+						\item 假设空间可以表示为一课属性值中通配符逐渐被具体数值取代的树。
+						\item 可以用许多策略对假设空间进行搜索，如自顶向下（从一般到特殊）、自底向上（从特殊到一般）。
+						\item 可能有多个假设与训练集一致，即存在着一个与训练集一致的``假设集合''，称之为``版本空间''（version space）。
+					\end{itemize}
+				\subsection{归纳偏好}
+					\begin{itemize}
+						\item 多个与训练集一致的假设所对应的模型在面临新样本时，可能产生不同的输出。而对于一个具体的学习算法而言，必须要产生一个模型。此时学习算法本身的偏好会起到关键的作用。
+						\item 归纳偏好（inductive bias）：机器学习算法在学习过程中对某种类型假设的偏好。
+						\item 奥卡姆剃刀（Occam's razor）：若有多个假设与观察一致，则选最简单的那个。【常用的、自然科学研究中最基本的原则】
+						\item 设$f$为希望学习的真实目标函数，则基于训练数据$X$的算法$\mathfrak{L}_a$在训练集之外的所有样本上的误差与学习算法无关，即\[\sum_{f}^{}E_{ote}(\mathfrak{L}_a|X,f)=\sum_{f}^{}E_{ote}(\mathfrak{L}_b|X,f)\]``没有免费的午餐''定理（NFL定理）：所有学习算法的期望性相同。
+					\end{itemize}
+				\subsection{发展历程}
+					\begin{enumerate}[1.]
+						\item 二十世纪五十年代到七十年代初：``推理期''——赋予机器逻辑推理能力
+						\item 二十世纪七十年代中期开始：``知识期''
+							\begin{enumerate}[a.]
+								\item 机械学习（信息存储与检索）
+								\item 示教学习（从指令中学习）
+								\item 类比学习（通过观察和发现学习）
+								\item 归纳学习（从样例中学习）
+									\begin{itemize}
+										\item 符号主义学习（决策树、基于逻辑的学习）
+										\item 连接主义学习（神经网络）
+										\item 统计学习（支持向量机、核方法）
+										\item 深度学习
+									\end{itemize}
+							\end{enumerate}
+					\end{enumerate}
+				\subsection{应用现状}
+					\begin{itemize}
+						\item 计算机科学诸多分支学科领域（如计算机视觉、自然语言处理）
+						\item 交叉学科（如生物信息学）
+						\item 数据挖掘（机器学习领域和数据库领域是数据挖掘的两大支撑）
+						\item 人类日常生活（天气预报、搜索引擎、自动驾驶、政治选举等）
+						\item 促进人们理解``人类如何学习''
+					\end{itemize}
+			\section{模型评估与选择}
+				\subsection{经验误差与过拟合}
+					\begin{itemize}
+						\item 设在$m$个样本中有$a$个样本分类错误，则错误率（error rate）为$E=a/m$，精度（accuracy）为$1-a/m$。
+						\item 误差（error）：学习器的实际预测输出与样本的真实输出之间的差异。训练误差（training error）/经验误差（empirical error）：学习器在训练集上的误差。泛化误差（generalization error）：学习器在新样本上的误差。想要使泛化误差最小，而新样本未知，所以努力使经验误差最小化。
+						\item 过拟合（overfitting）：学习器将训练样本自身的一些特点当作为所有潜在样本都会具有的一般性质。【关键障碍、无法彻底避免】欠拟合（underfitting）：学习器对训练样本的一般性质尚未学好。【较容易克服】若``P$\neq$NP''，过拟合就不可避免。
+					\end{itemize}
+				\subsection{评估方法}
+				
+					为了对学习器对泛化误差进行评估，需要使用一个测试集（testing set）来测试学习器对新样本的判别能力，然后以测试集上的测试误差（testing error）作为泛化误差的近似。
+					
+					若当前只有一个包含$m$个样例的数据集\[D=\{(x_1,y_1),(x_2,y_2),\dots,(x_m,y_m)\}\]，则对其进行适当的处理，从中产生训练集$S$和测试集$T$。
+					\subsubsection{留出法}
+					
+						直接将数据集$D$划分为两个互斥的集合，其中一个作为训练集$S$，另一个作为测试集$T$，即$D=S\cup T,S\cap T=\emptyset$，在$S$上训练出模型后，用$T$来评估其测试误差，作为对泛化误差的估计。
+						\begin{itemize}
+							\item 划分尽可能保持数据分布的一致性，例如在分类任务中至少要保持样本的类别比例相似（分层采样）。
+							\item 一般采用若干次随机划分、重复进行实验评估后取平均值作为评估结果。
+							\item $S$和$D$大小权衡没有完美的解决方案，常见做法是2/3$\sim$4/5的训练样本比例。
+						\end{itemize}
+					\subsubsection{交叉验证法}
+						
+						将数据集$D$划分为$k$个大小相似的互斥子集，即\[D=D_1\cup D_2\cup\dots\cup D_k,D_i\cup D_j=\emptyset(i\neq j)\]每个子集$D_i$都尽可能保持数据分布的一致性（分层抽样）。然后从中选取$k-1$个子集为训练集，剩下一个子集为测试集。可进行$k$次训练和测试，最终返回$k$个测试结果的均值。也称为``$k$折交叉验证''（$k$-fold cross validation）。
+						\begin{itemize}
+							\item $k$最常用的取值是10，常用的还有5、20等。
+							\item 留一法（Leave-One-Out）不受随机样本划分的影响，评估结果比较准确，但计算开销大。
+						\end{itemize}
+					\subsubsection{自助法}
+						
+						以自助采样法（bootstrap sampling）为基础，给定包含$m$个样本的数据集$D$，每次随机从$D$中挑选一个样本，将其拷贝放入$D'$，再将该样本放回初始数据集$D$中。这个过程重复执行$m$次后，得到了包含$m$个样本的数据集$D'$。此时将$D'$用作训练集，$D\backslash D'$用作测试集。
+						\begin{itemize}
+							\item $D$有约36.8\%的样本未出现在采样数据集$D'$中。
+							\item 亦称为``包外估计''（out-of-bag estimate）。
+							\item 自助法在数据集较小、难以有效划分训练/测试集时很有用，且能从初始数据集中产生多个不同的训练集。
+							\item 因为自助法产生的数据集改变了初始数据集的分布，会引入估计偏差。
+						\end{itemize}
+					\subsubsection{调参与最终模型}
+						\begin{itemize}
+							\item 常用的调参做法：对每个参数选定一个范围和变化步长，进行计算开销和性能估计之间的折中。
+							\item 在模型选择完成后，学习算法和参数配置已选定，此时用数据集$D$重新训练模型，使用所有$m$个样本，得到最终提交给用户的模型。
+						\end{itemize}
+				\subsection{性能度量}
+					
+					给定样例集\[D=\{(\bm{x}_1,y_1),(\bm{x}_2,y_2),\dots,(\bm{x}_m,y_m)\}\]其中$y_i$是示例$\bm{x}_i$的真实标记。要评估学习器$f$的性能，即把学习器预测结果$f(\bm{x})$与真实标记$y$进行比较。
+					
+					回归任务中最常用的性能度量：``均方误差''（mean squared error）\[E(f;D)=\frac{1}{m}\sum_{i=1}^{m}(f(\bm{x}_i)-y_i)^2\]更一般地，对于数据分布$\mathcal{D}$和概率密度函数$p(\cdot)$，均方误差可描述为\[E(f;\mathcal{D})=\int_{x\sim\mathcal{D}}^{}(f(\bm{x})-y)^2p(\bm{x})d\bm{x}\]对于分类任务——
+					\subsubsection{错误率与精度}
+						\begin{itemize}
+							\item 分类错误率\[E(f;D)=\frac{1}{m}\sum_{i=1}^{m}\mathbb{I}(f(\bm{x}_i)\neq y_i)\]精度\[\mathrm{acc}(f;D)=\frac{1}{m}\sum_{i=1}^{m}\mathbb{I}(f(\bm{x}_i)=y_i)=1-E(f;D)\]
+							\item 对于数据分布$\mathcal{D}$和概率密度函数$p(\cdot)$，错误率\[E(f;\mathcal{D})=\int_{x\sim\mathcal{D}}^{}\mathbb{I}(f(\bm{x})\neq y)p(\bm{x})d\bm{x}\]精度\[\mathrm{acc}(f;\mathcal{D})=\int_{x\sim\mathcal{D}}^{}\mathbb{I}(f(\bm{x})=y)p(\bm{x})d\bm{x}=1-E(f;\mathcal{D})\]
+						\end{itemize}
+					\subsubsection{查准率、查全率与$F1$}
+						\begin{center}
+							\begin{tabular}{c|c|c}
+								\hline
+								\multirow{2}*{真实情况} & \multicolumn{2}{|c}{预测结果}\\
+								\cline{2-3}
+								& 正例 & 反例\\
+								\hline
+								正例 & $TP$（真正例）& $FN$（假反例）\\
+								\hline
+								反例 & $FP$（假正例）& $TN$（真反例）\\
+								\hline 
+							\end{tabular}
+						\end{center}
+						查准率（precision）\[P=\frac{TP}{TP+FP}\]查全率（recall）\[R=\frac{TP}{TP+FN}\]
+						\begin{itemize}
+							\item 平衡点（Break-Even Point，BEP）：$R=P$时的取值，数值越高可以认为学习器越优。
+							\item $F1$度量\[F1=\frac{2\times P\times R}{P+R}=\frac{2\times TP}{\textrm{样例总数}+TP-TN}\]实际上$F1$是$R$和$P$的调和平均\[\frac{1}{F1}=\frac{1}{2}(\frac{1}{P}+\frac{1}{R})\]
+							\item $F_\beta$度量：考虑$R$与$P$的不同偏好，设$\beta$为查全率$R$对查准率$P$的相对重要性，则\[F_\beta=\frac{(1+\beta^2)\times P\times R}{(\beta^2\times P)+R}\]实际上$F_\beta$是加权调和平均\[\frac{1}{F_\beta}=\frac{1}{1+\beta^2}(\frac{1}{P}+\frac{\beta^2}{R})\]
+							\item 宏$F1$：在各混淆矩阵上分别计算出各自的$(P_i,R_i)$，再计算平均值：\[\mathrm{macro-}P=\frac{1}{n}\sum_{i=1}^{n}P_i\]\[\mathrm{macro-}R=\frac{1}{n}\sum_{i=1}^{n}R_i\]\[\mathrm{macro-}F1=\frac{2\times\mathrm{macro-}P\times\mathrm{macro-}R}{\mathrm{macro-}P+\mathrm{macro-}R}\]
+							\item 微$F1$：先将各混淆矩阵的对应元素进行平均得到四个指标，再基于这些平均值计算$F1$：\[\mathrm{micro-}P=\frac{\overline{TP}}{\overline{TP}+\overline{FP}}\]\[\mathrm{micro-}R=\frac{\overline{TP}}{\overline{TP}+\overline{FN}}\]\[\mathrm{micro-}F1=\frac{2\times\mathrm{micro-}P\times\mathrm{micro-}R}{\mathrm{micro-}P+\mathrm{micro-}R}\]
+						\end{itemize}
+						$\bigtriangleup$\quad 混淆矩阵介绍：每一列代表了预测类别，每一列的总数表示预测为该类别的数据的数目；每一行代表了数据的真实归属类别 ，每一行的数据总数表示该类别的数据实例的数目。例如共有150个样本数据，预测为1、2、3类各50个，分类结束后得到的混淆矩阵为\begin{center}
+							\begin{tabular}{|c|c|c|c|c|}
+								\hline
+								\multicolumn{2}{|c|}{\multirow{2}{*}{}} & \multicolumn{3}{c|}{预测} \\ \cline{3-5} 
+								\multicolumn{2}{|c|}{}                  & 类1     & 类2     & 类3    \\ \hline
+								\multirow{3}{*}{实际}         & 类1        & 43     & 2      & 0     \\ \cline{2-5} 
+								& 类2        & 5      & 45     & 1     \\ \cline{2-5} 
+								& 类3        & 2      & 3      & 49    \\ \hline
+							\end{tabular}
+						\end{center}
+					\subsubsection{ROC与AUC}
+					
+						ROC全称是``受试者工作特征''（Receiver Operating Characteristic）曲线。横轴为``假正例率''（$FPR$），纵轴为``真正例率''（$TPR$）。\[TPR=\frac{TP}{TP+FN}\]\[FPR=\frac{FP}{TN+FP}\]
+						\begin{itemize}
+							\item 现实任务中ROC曲线的绘制方法：给定$m^+$个正例和$m^-$个反例，根据学习器预测结果对样例进行排序，然后把分类阈值设为最大，此时$FPR$和$TPR$都为0.在坐标$(0, 0)$处标记一个点，然后将分类阈值依次设为每个样例的预测值。设当前一个标记点坐标为$(x,y)$，若当前为真正例，则对应标记点坐标为$(x,y+\frac{1}{m^+})$；若当前为假正例，则对应标记点坐标为$(x+\frac{1}{m^-},y)$，然后用线段连接相邻点即得。
+							\item AUC（Area Under ROC Curve）即为ROC曲线下各部分的面积之和。设ROC曲线是由坐标为$\{(x_i,y_i)|1\le i\le m\}$的点按序连接而成，则AUC可估算为\[\mathrm{AUC}=\frac{1}{2}\sum_{i=1}^{m-1}(x_{i+1}-x_i)\cdot(y_i+y_{i+1})\]
+							\item 给定$m^+$个正例和$m^-$个反例，令$D^+$和$D^-$分别表示正、反例集合，则排序``损失''（loss）定义为\[\ell_{rank}=\frac{1}{m^+m^-}\sum_{\bm{x}^+\in D^+}^{}\sum_{\bm{x}^-\in D^-}^{}\bigg(\mathbb{I}\big(f(\bm{x}^+)<f(\bm{x}^-)\big)+\frac{1}{2}\mathbb{I}\big(f(\bm{x}^+)=f(\bm{x}^-)\big)\bigg)\]它对应ROC曲线之上的面积，有\[\mathrm{AUC}=1-\ell_{rank}\]
+						\end{itemize}
+					\subsubsection{代价敏感错误率与代价曲线}
+						\begin{itemize}
+							\item 不同类型的错误可能造成不同损失，所以为错误赋予``非均等代价''（unequal cost）。
+							\item 以二分类为例，可以设定一个``代价矩阵''，如下表所示。\begin{center}
+								\begin{tabular}{|c|c|c|}
+									\hline
+									\multirow{2}{*}{真实类别} & \multicolumn{2}{c|}{预测类别} \\ \cline{2-3} 
+									& 第0类         & 第1类         \\ \hline
+									第0类                   & 0           & $cost_{01}$ \\ \hline
+									第1类                   & $cost_{10}$ & 0           \\ \hline
+								\end{tabular}	
+							\end{center}
+							\item ``代价敏感''（cost-sensitive）错误率\[E(f;D;cost)=\frac{1}{m}\bigg(\sum_{\bm{x}_i\in D^+}^{}\mathbb{I}\big(f(\bm{x}_i)\neq y_i\big)\times cost_{01}+\sum_{\bm{x}_i\in D^-}^{}\mathbb{I}\big(f(\bm{x}_i)\neq y_i\big)\times cost_{10}\bigg)\]
+							\item 在非均等代价下， ``代价曲线''（cost curve）可以刻画期望总体代价。设$p$是样例为正例的概率。横轴为正例概率代价\[P(+)cost = \frac{p\times cost_{01}}{p\times cost_{01}+(1-p)\times cost_{10}}\]纵轴为取值为$[0,1]$的归一化代价\[cost_{norm}=\frac{\mathrm{FNR}\times p\times cost_{01}+\mathrm{FPR}\times(1-p)\times cost_{10}}{p\times cost_{01}+(1-p)\times cost_{10}}\]
+							\item 代价曲线的绘制方法：将ROC曲线上的每一点转化为代价平面上的一条线段，取所有线段的下界，围成的面积即为所有条件下学习器的期望总体代价。
+						\end{itemize}
+			\section{线性模型}
+			\section{决策树}
+			\section{神经网络}
+			\section{支持向量机}
+			\section{贝叶斯分类器}
+			\section{集成学习}
+			\section{聚类}
+			\section{降维与度量学习}
+			\section{特征选择与稀疏学习}
+			\section{计算学习理论}
+			\section{半监督学习}
+			\section{概率图模型}
+			\section{规则学习}
+			\section{强化学习}
+			
+\end{document}
