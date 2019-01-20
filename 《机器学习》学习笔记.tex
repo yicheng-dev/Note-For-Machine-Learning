@@ -261,6 +261,15 @@
 						\item 偏差-方差窘境（bias-variance dilemma）：训练不足时偏差主导，训练加深时方差主导，训练充足时容易发生过拟合。
 					\end{itemize}
 			\section{线性模型}
+				\subsection{基本形式}
+				
+					示例$\bm{x}=(x_1;x_2;\dots;x_d)$，其中$x_i$是$\bm{x}$在第$i$个属性上的取值，则线性模型\[f(\bm{x})=w_1x_1+w_2x_2+\dots+w_dx_d+b=\bm{w}^T\bm{x}+b\]
+				\subsection{线性回归}
+					\begin{itemize}
+						\item 一元线性回归的目标\[f(x_i)=wx_i+b,\textrm{ 使得}f(x_i)\simeq y_i\]其中\[(w^*,b^*)=\mathrm{arg}_{(w,b)}\mathrm{min}\sum_{i=1}^{m}(y_i-wx_i-b)^2\]利用``最小二乘法''的最小二乘``参数估计''将$E_{(w,b)}=\sum_{i=1}^{m}(y_i-wx_i-b)^2$对$w$和$b$分别求导并令为零即可得到$w,b$最优解的闭式解\[w=\frac{\sum_{i=1}^{m}y_i(x_i-\bar{x})}{\sum_{i=1}^{m}x_i^2-\frac{1}{m}\big(\sum_{i=1}^{m}x_i\big)^2}\mathrm{\qquad}b=\frac{1}{m}\sum_{i=1}^{m}(y_i-wx_i)\]
+						\item 多元线性回归的目标\[f(\bm{x}_i)=\bm{w}^T\bm{x}_i+b,\textrm{ 使得}f(\bm{x}_i)\simeq y_i\]
+						TODO
+					\end{itemize}
 			\section{决策树}
 			\section{神经网络}
 			\section{支持向量机}
