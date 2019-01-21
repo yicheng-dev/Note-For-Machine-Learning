@@ -15,6 +15,7 @@
 \usepackage{enumerate}
 \usepackage{mathrsfs}
 \usepackage{listings}
+\usepackage{framed}
 \usepackage{fancyhdr}
 \allowdisplaybreaks[4]
 \usetikzlibrary{arrows,graphs}
@@ -179,16 +180,18 @@
 							\item 宏$F1$：在各混淆矩阵上分别计算出各自的$(P_i,R_i)$，再计算平均值：\[\mathrm{macro-}P=\frac{1}{n}\sum_{i=1}^{n}P_i\]\[\mathrm{macro-}R=\frac{1}{n}\sum_{i=1}^{n}R_i\]\[\mathrm{macro-}F1=\frac{2\times\mathrm{macro-}P\times\mathrm{macro-}R}{\mathrm{macro-}P+\mathrm{macro-}R}\]
 							\item 微$F1$：先将各混淆矩阵的对应元素进行平均得到四个指标，再基于这些平均值计算$F1$：\[\mathrm{micro-}P=\frac{\overline{TP}}{\overline{TP}+\overline{FP}}\]\[\mathrm{micro-}R=\frac{\overline{TP}}{\overline{TP}+\overline{FN}}\]\[\mathrm{micro-}F1=\frac{2\times\mathrm{micro-}P\times\mathrm{micro-}R}{\mathrm{micro-}P+\mathrm{micro-}R}\]
 						\end{itemize}
-						$\bigtriangleup$\quad 混淆矩阵介绍：每一列代表了预测类别，每一列的总数表示预测为该类别的数据的数目；每一行代表了数据的真实归属类别 ，每一行的数据总数表示该类别的数据实例的数目。例如共有150个样本数据，预测为1、2、3类各50个，分类结束后得到的混淆矩阵为\begin{center}
-							\begin{tabular}{|c|c|c|c|c|}
-								\hline
-								\multicolumn{2}{|c|}{\multirow{2}{*}{}} & \multicolumn{3}{c|}{预测} \\ \cline{3-5} 
-								\multicolumn{2}{|c|}{}                  & 类1     & 类2     & 类3    \\ \hline
-								\multirow{3}{*}{实际}         & 类1        & 43     & 2      & 0     \\ \cline{2-5} 
-								& 类2        & 5      & 45     & 1     \\ \cline{2-5} 
-								& 类3        & 2      & 3      & 49    \\ \hline
-							\end{tabular}
-						\end{center}
+						\begin{framed}
+							$\triangle$ 混淆矩阵介绍：每一列代表了预测类别，每一列的总数表示预测为该类别的数据的数目；每一行代表了数据的真实归属类别 ，每一行的数据总数表示该类别的数据实例的数目。例如共有150个样本数据，预测为1、2、3类各50个，分类结束后得到的混淆矩阵为\begin{center}
+								\begin{tabular}{|c|c|c|c|c|}
+									\hline
+									\multicolumn{2}{|c|}{\multirow{2}{*}{}} & \multicolumn{3}{c|}{预测} \\ \cline{3-5} 
+									\multicolumn{2}{|c|}{}                  & 类1     & 类2     & 类3    \\ \hline
+									\multirow{3}{*}{实际}         & 类1        & 43     & 2      & 0     \\ \cline{2-5} 
+									& 类2        & 5      & 45     & 1     \\ \cline{2-5} 
+									& 类3        & 2      & 3      & 49    \\ \hline
+								\end{tabular}
+							\end{center}
+						\end{framed}
 					\subsubsection{ROC与AUC}
 					
 						ROC全称是``受试者工作特征''（Receiver Operating Characteristic）曲线。横轴为``假正例率''（$FPR$），纵轴为``真正例率''（$TPR$）。\[TPR=\frac{TP}{TP+FN}\]\[FPR=\frac{FP}{TN+FP}\]
@@ -267,8 +270,46 @@
 				\subsection{线性回归}
 					\begin{itemize}
 						\item 一元线性回归的目标\[f(x_i)=wx_i+b,\textrm{ 使得}f(x_i)\simeq y_i\]其中\[(w^*,b^*)=\mathrm{arg}_{(w,b)}\mathrm{min}\sum_{i=1}^{m}(y_i-wx_i-b)^2\]利用``最小二乘法''的最小二乘``参数估计''将$E_{(w,b)}=\sum_{i=1}^{m}(y_i-wx_i-b)^2$对$w$和$b$分别求导并令为零即可得到$w,b$最优解的闭式解\[w=\frac{\sum_{i=1}^{m}y_i(x_i-\bar{x})}{\sum_{i=1}^{m}x_i^2-\frac{1}{m}\big(\sum_{i=1}^{m}x_i\big)^2}\mathrm{\qquad}b=\frac{1}{m}\sum_{i=1}^{m}(y_i-wx_i)\]
-						\item 多元线性回归的目标\[f(\bm{x}_i)=\bm{w}^T\bm{x}_i+b,\textrm{ 使得}f(\bm{x}_i)\simeq y_i\]
-						TODO
+						\item 多元线性回归的目标\[f(\bm{x}_i)=\bm{w}^T\bm{x}_i+b,\textrm{ 使得}f(\bm{x}_i)\simeq y_i\]设$\hat{\bm{w}}=(\bm{w};b)$，将数据集$D$表示为一个$m\times(d+1)$大小的矩阵$\bm{X}$\[\bm{X}=\left(\begin{matrix}
+						x_{11} & x_{12} & \cdots & x_{1d} & 1 \\
+						x_{21} & x_{22} & \cdots & x_{2d} & 1 \\
+						\vdots & \vdots & \ddots & \vdots & \vdots \\
+						x_{m1} & x_{m2} & \cdots & x_{md} & 1
+						\end{matrix}\right)=\left(\begin{matrix}
+						\bm{x}_1^T & 1 \\
+						\bm{x}_2^T & 1 \\
+						\vdots & \vdots \\
+						\bm{x}_m^T & 1
+						\end{matrix}\right)\]其中\[\hat{\bm{w}}^*=\mathrm{arg}_{\hat{\bm{w}}}\mathrm{min}(\bm{y}-\bm{X\hat{w}})^T(\bm{y}-\bm{X\hat{w}})\]令$E_{\hat{\bm{w}}}=(\bm{y}-\bm{X\hat{w}})^T(\bm{y}-\bm{X\hat{w}})$，对$\bm{\hat{w}}$求导并令为零即$2\bm{X}^T(\bm{X\hat{w}}-\bm{y})=0$即可。若$\bm{X}^T\bm{X}$正定（满秩），则求出$\hat{\bm{w}}^*=(\bm{X}^T\bm{X})^{-1}\bm{X}^T\bm{y}$，此时\[f(\hat{\bm{x}}_i)=\hat{\bm{x}}_i^T(\bm{X}^T\bm{X})^{-1}\bm{X}^T\bm{y}\]若$\bm{X}^T\bm{X}$不满秩，则可能有多解，通过引入正则化由归纳偏好决定。
+						\item 广义线性模型：考虑单调可微函数$g(\cdot)$\[y=g^{-1}(\bm{w}^T\bm{x}+b)\]其中$g(\cdot)$称为``联系函数''。
+					\end{itemize}
+				\subsection{对数几率回归}
+					\begin{itemize}
+						\item 单位阶跃函数：对于二分类问题将线性回归模型的实值转化为0/1值。其中预测值为临界值零可任意判别\[y=\left\{\begin{aligned}
+						0,\quad & z < 0; \\
+						0.5,\quad & z = 0; \\
+						1,\quad & z > 0;
+						\end{aligned}\right.\]
+						\item 对数几率函数\[y=\frac{1}{1+e^{-(\bm{w}^T\bm{x}+b)}}\]可化为\[\ln\frac{y}{1-y}=\bm{w}^T\bm{x}+b\]其中$y$可视为$\bm{x}$作为正例的可能性，$1-y$可视为其作为反例的可能性。
+						\item 对数几率回归的$\bm{w},b$估计方法：极大似然法。【TODO：细节待学完7.2节极大似然法及梯度下降法再补充】
+					\end{itemize}
+				\subsection{线性判别分析}
+					\begin{itemize}
+						\item 思想：设法将样例投影到一条直线上，使得同类样例的投影尽可能接近、异类样例的投影尽可能远离。对于新样本根据其投影到这条直线的投影点位置进行分类。\begin{framed}
+							$\triangle$ L2范数（例如欧氏距离）\[\parallel x\parallel_2=\sqrt{\sum_{i=1}^{k}|x_i|^2}\]
+						\end{framed}
+						\item 目的：使同类样例投影点的协方差（$\bm{w}^T\Sigma_{0}^{}\bm{w}+\bm{w}^T\Sigma_{1}^{}\bm{w}$）尽可能小，使类中心之间的距离（$\parallel\bm{w}^T\bm{\mu}_0-\bm{w}^T\bm{\mu}_1\parallel_2^2$）尽可能大。
+						\item 类内散度矩阵\[\bm{S}_w=\Sigma_{0}+\Sigma_{1}=\sum_{\bm{x}\in X_0}^{}(\bm{x}-\bm{\mu}_0)(\bm{x}-\bm{\mu}_0)^T+\sum_{\bm{x}\in X_1}^{}(\bm{x}-\bm{\mu}_1)(\bm{x}-\bm{\mu}_1)^T\]
+						\item 类间散度矩阵\[\bm{S}_b=(\bm{\mu}_0-\bm{\mu}_1)(\bm{\mu}_0-\bm{\mu}_1)^T\]
+						\item 欲最大化目标（$\bm{S}_b$与$\bm{S}_w$的广义Rayleigh商）\[J=\frac{\parallel\bm{w}^T\bm{\mu}_0-\bm{w}^T\bm{\mu}_1\parallel_2^2}{\bm{w}^T\Sigma_{0}^{}\bm{w}+\bm{w}^T\Sigma_{1}^{}\bm{w}}=\frac{\bm{w}^T(\bm{\mu}_0-\bm{\mu}_1)(\bm{\mu}_0-\bm{\mu}_1)^T\bm{w}}{\bm{w}^T(\Sigma_{0}+\Sigma_{1})\bm{w}}=\frac{\bm{w}^T\bm{S}_b\bm{w}}{\bm{w}^T\bm{S}_w\bm{w}}\]
+						\item 确定$\bm{w}$的方法：$J$中的解与$\bm{w}$的长度无关，故令$\bm{w}^T\bm{S}_w\bm{w}=1$，转化为：已知$\bm{w}^T\bm{S}_w\bm{w}=1$求$-\bm{w}\bm{S}_b\bm{w}$的最小值。由拉格朗日乘子法，即$\bm{S}_b\bm{w}=\lambda\bm{S}_w\bm{w}$。又$\bm{S}_b\bm{w}$方向恒为$\bm{\mu}_0-\bm{\mu}_1$，令$\bm{S}_b\bm{w}=\lambda(\bm{\mu}_0-\bm{\mu}_1)$，得\[\bm{w}=\bm{S}_w^{-1}(\bm{\mu}_0-\bm{\mu}_1)\]对$\bm{S}_w$进行奇异值分解$\bm{S}_w=\bm{U\Sigma V}^T$，由$\bm{S}_w^{-1}=\bm{V\Sigma}^{-1}\bm{U}^{-1}$得到$\bm{w}$。
+						\begin{framed}
+							$\triangle$ 上例用拉格朗日乘子法的计算细节：目标函数为$f(\bm{x})=-\bm{w}\bm{S}_b\bm{w}$，约束方程$g(\bm{x})=\bm{w}^T\bm{S}_w\bm{w}-1=0$。等价于由方程$g(\bm{x})=0$确定的$d-1$维曲面上寻找能使$f(\bm{x})$最小化的点，满足\begin{enumerate}[(1)]
+								\item 约束曲面上任意点$\bm{x}$的梯度$\nabla g(\bm{x})$正交于约束曲面
+								\item 在最优点$\bm{x}^*$，$f(\bm{x})$在该点的梯度$\nabla f(\bm{x}^*)$正交于约束曲面
+							\end{enumerate}于是在最优点$\bm{x}^*$，梯度$\nabla g(\bm{x})$和$\nabla f(\bm{x})$的方向必相同或相反，即存在$\lambda\neq0$使得\[\nabla f(\bm{x}^*)+\lambda\nabla g(\bm{x}^*)=0\]即\[\bm{S}_b\bm{w}=\lambda\bm{S}_w\bm{w}\]
+						\end{framed}
+						\item LDA推广到多分类任务。假设存在$N$个类，且第$i$类示例数为$m_i$。设$\bm{\mu}$是所有示例的均值向量。全局散度矩阵\[\bm{S}_t=\bm{S}_b+\bm{S}_w=\sum_{i=1}^{m}(\bm{x}_i-\bm{\mu})(\bm{x}_i-\bm{\mu})^T\]类内散度矩阵\[\bm{S}_w=\sum_{i=1}^{N}\bm{S}_{w_i}=\sum_{i=1}^{N}\sum_{\bm{x}\in X_i}^{}(\bm{x}-\bm{\mu}_i)(\bm{x}-\bm{\mu}_i)^T\]类间散度矩阵\[\bm{S}_b=\bm{S}_t-\bm{S}_w=\sum_{i=1}^{N}m_i(\bm{\mu}_i-\bm{\mu})(\bm{\mu}_i-\bm{\mu})^T\]常用实现的优化目标\[\max\limits_{\bm{W}}\frac{\mathrm{tr}(\bm{W}^T\bm{S}_b\bm{W})}{\mathrm{tr}(\bm{W}^T\bm{S}_w\bm{W})}\]可以通过广义特征值$\bm{S}_b\bm{W}=\lambda\bm{S}_w\bm{W}$求解，$\bm{W}$的闭式解为$\bm{S}_w^{-1}\bm{S}_b$的$d'$个最大非零广义特征值对应的特征向量组成的矩阵，有$d'\le N-1$，实现了降维。
 					\end{itemize}
 			\section{决策树}
 			\section{神经网络}
