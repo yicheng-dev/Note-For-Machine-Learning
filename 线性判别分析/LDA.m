@@ -1,4 +1,4 @@
-%以二元二分类为例
+%以二分类为例
 data = load('data.txt');
 [dataCnt, d] = size(data);
 X = data(:, 1 : (d - 1));
