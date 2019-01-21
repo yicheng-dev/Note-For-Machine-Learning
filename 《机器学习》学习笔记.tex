@@ -312,6 +312,27 @@
 						\end{framed}
 						\item LDA推广到多分类任务。假设存在$N$个类，且第$i$类示例数为$m_i$。设$\bm{\mu}$是所有示例的均值向量。全局散度矩阵\[\bm{S}_t=\bm{S}_b+\bm{S}_w=\sum_{i=1}^{m}(\bm{x}_i-\bm{\mu})(\bm{x}_i-\bm{\mu})^T\]类内散度矩阵\[\bm{S}_w=\sum_{i=1}^{N}\bm{S}_{w_i}=\sum_{i=1}^{N}\sum_{\bm{x}\in X_i}^{}(\bm{x}-\bm{\mu}_i)(\bm{x}-\bm{\mu}_i)^T\]类间散度矩阵\[\bm{S}_b=\bm{S}_t-\bm{S}_w=\sum_{i=1}^{N}m_i(\bm{\mu}_i-\bm{\mu})(\bm{\mu}_i-\bm{\mu})^T\]常用实现的优化目标\[\max\limits_{\bm{W}}\frac{\mathrm{tr}(\bm{W}^T\bm{S}_b\bm{W})}{\mathrm{tr}(\bm{W}^T\bm{S}_w\bm{W})}\]可以通过广义特征值$\bm{S}_b\bm{W}=\lambda\bm{S}_w\bm{W}$求解，$\bm{W}$的闭式解为$\bm{S}_w^{-1}\bm{S}_b$的$d'$个最大非零广义特征值对应的特征向量组成的矩阵，有$d'\le N-1$，实现了降维。
 					\end{itemize}
+				\subsection{多分类学习}
+					\begin{itemize}
+						\item 基本思路：将多分类任务拆为若干个二分类任务求解，最经典的拆分策略有三种。
+						\item 一对一（OvO）：将$N$个类别两两配对，产生$N(N-1)/2$个二分类任务。最终把预测得最多的类别作为分类结果。
+						\item 一对其余（OvR）：每次将一个类的样例作为正例，所有其它类的样例作为反例，产生$N$个分类任务。最终若仅有一个分类器预测为正类，则对应的类别标记为最终分类结果，否则考虑各分类器的置信区间，选择置信度最大的类别标记作为分类结果。
+						\item 多对多（MvM）：每次将若干个类作为正类，若干个其它类作为反类，可用纠错输出码（ECOC）技术。
+						\item ECOC工作过程：\begin{enumerate}[(1)]
+							\item 编码（类别划分）：对$N$个类别做$M$次划分，每次划分将一部分类别作为正类、一部分类别作为反类，产生$M$个分类器。
+							\item 解码（距离比较）：用$M$个分类器对测试样本进行预测，这些预测标记组成一个编码，计算其与各个类别各自编码的距离，返回距离最小的类别作为分类结果。
+						\end{enumerate}
+						常用的编码矩阵为二元码和三元码（有停用类）。
+						\item 任何两个类别之间的编码距离越远，纠错能力越强，而码长的增加会增大确定最优编码的难度。
+					\end{itemize}
+				\subsection{类别不平衡问题}
+					\begin{itemize}
+						\item 类别不平衡（class-imbalance）：分类任务中不同类别的训练样例数目差别很大。以下为类别不平衡学习的策略。
+						\item 再缩放（rescaling）：假设``训练集是真实样本总体的无偏采样''，令\[\frac{y'}{1-y'}=\frac{y}{1-y}\times\frac{m^-}{m^+}\]也是代价敏感学习，其中的$m^-/m^+$可用$cost^+/cost^-$代替。
+						\item 欠采样（undersampling）/下采样（downsampling）：去除一些正例（反例）使得正、反例数目接近。可用EasyEnsemble算法将反例划分为若干个集合供不同学习器使用，全局上不会丢失重要信息。
+						\item 过采样（oversampling）/上采样（upsampling）：增加一些正例（反例）使得正、反例数目接近。可用SMOTE算法对训练集中的正例进行插值。
+						\item 阈值移动（threshold-moving）：基于原始训练集学习，在用训练好的分类器进行预测时将``再缩放''中的式子嵌入到决策过程中。
+					\end{itemize}
 			\section{决策树}
 			\section{神经网络}
 			\section{支持向量机}
