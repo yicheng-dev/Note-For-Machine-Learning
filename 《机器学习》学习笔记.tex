@@ -28,6 +28,9 @@
 \definecolor {processblue}{cmyk}{0.96,0,0,0}
 \setCJKmainfont{STKaiti}
 
+\renewcommand{\algorithmicrequire}{\textbf{Input:}} 
+\renewcommand{\algorithmicensure}{\textbf{Output:}}
+
 \begin{document}
 			\title{《机器学习》读书笔记}
 			\author{黄奕诚}
@@ -334,6 +337,63 @@
 						\item 阈值移动（threshold-moving）：基于原始训练集学习，在用训练好的分类器进行预测时将``再缩放''中的式子嵌入到决策过程中。
 					\end{itemize}
 			\section{决策树}
+				\subsection{基本流程}
+					\begin{itemize}
+						\item 决策树的性质：包含一个根结点、若干个内部结点、若干个叶结点，叶结点对应于决策结果，其他每个结点对应于一个属性测试，根结点包含样本全集。从根结点到每个叶结点的路径对应了一个判定测试序列。
+						\item 决策树的目的：产生一棵泛化能力强的决策树。
+						\item 决策树的基本流程（分治策略）
+						\begin{algorithm}
+							\caption{TreeGenerate($D,A$)}
+							\begin{algorithmic}[1]
+								\REQUIRE 训练集$D=\{(\bm{x}_1,y_1),(\bm{x}_2,y_2),\dots,(\bm{x}_m,y_m)\}$;\\属性集$A=\{a_1,a_2,\dots,a_d\}$
+								\ENSURE 以node为根结点的一棵决策树
+								\STATE 生成结点node; \\
+								\IF{$D$中样本全属于同一类别$C$}
+								\STATE 将node标记为$C$类叶结点;\\
+								\RETURN
+								\ENDIF
+								\IF{$A=\emptyset$ \OR $D$中样本在$A$上取值相同}
+								\STATE 将node标记为叶结点，其类别标记为$D$中样本数最多的类;\\
+								\RETURN
+								\ENDIF
+								\STATE 从$A$中选择最优划分属性$a_*$;\\
+								\FOR{$a_*$的每一个值$a_*^v$}
+								\STATE 为node生成一个分支;\\
+								\STATE 令$D_v$表示$D$中在$a_*$上取值为$a_*^v$的样本子集;\\
+								\IF{$D_v$为空}
+								\STATE 将分支结点标记为叶结点，其类别标记为$D$中样本数最多的类;\\
+								\RETURN
+								\ELSE
+								\STATE 以$\mathrm{TreeGenerate}(D_v,A\backslash\{a_*\})$为分支结点\\
+								\ENDIF
+								\ENDFOR
+							\end{algorithmic} 
+						\end{algorithm}
+					\end{itemize}
+				\subsection{划分选择}
+					
+					目的：使决策树的分支结点所包含的样本尽可能属于同一类别，结点的纯度越来越高。
+					\subsubsection{信息增益}
+						\begin{itemize}
+							\item ID3决策树算法以信息增益为准则选择划分属性。
+							\item 信息熵（设$D$中共有$\mathcal{Y}$类样本，第$k$类样本所占的比例为$p_k$，值越小则$D$的纯度越高）\[\mathrm{Ent}(D)=-\sum_{k=1}^{|\mathcal{Y}|}p_k\log_2p_k\]
+							\item 设离散属性$a$的取值集合为$\{a^1,a^2,\dots,a_V\}$，用$a$对样本集合$D$进行划分，产生$V$个分支结点，第$v$个分支结点包含了$D$中所有在属性$a$上取值为$a^v$的样本，记为$D^v$，于是信息增益（值越大则纯度提升越大）：\[\mathrm{Gain}(D,a)=\mathrm{Ent}(D)-\sum_{v=1}^{V}\frac{|D^v|}{|D|}\mathrm{Ent}(D^v)\]
+							\item 最终选择的属性\[a_*=\mathrm{arg}_{a\in A}\mathrm{max}\quad\mathrm{Gain}(D,a)\]
+							\item 缺点：对可取值数目较多对属性有所偏好。
+						\end{itemize}
+					\subsubsection{增益率}
+						\begin{itemize}
+							\item C4.5决策树算法以增益率为准则选择划分属性。
+							\item 增益率\[\mathrm{Gain_ratio}(D,a)=\frac{\mathrm{Gain}(D,a)}{\mathrm{IV}(a)}\]其中$\mathrm{IV}(a)$为属性$a$的``固有值''，可能取值数目越多则通常越大。\[\mathrm{IV}(a)=-\sum_{v=1}^{V}\frac{|D^v|}{|D|}\log_2\frac{|D^v|}{|D|}\]
+							\item 缺点：对可取值数目较少的属性有所偏好，所以选择候选划分属性时使用了一个启发式算法：先从候选划分属性中找出信息增益高于平均水平的属性，再从中选择增益率最高的。
+						\end{itemize}
+					\subsubsection{基尼指数}
+						\begin{itemize}
+							\item CART决策树算法以基尼指数（Gini index）为准则选择划分属性。
+							\item 基尼值（度量数据集$D$的纯度），反映了从$D$中随机抽取两个样本，其类别标记不一致的概率，值越小则纯度越高。\[\mathrm{Gini}(D)=\sum_{k=1}^{|\mathcal{Y}|}\sum_{k'\neq k}^{}p_kp_{k'}=1-\sum_{k=1}^{|\mathcal{Y}|}p_k^2\]
+							\item 属性$a$的基尼指数\[\mathrm{Gini_index}(D,a)=\sum_{v=1}^{V}\frac{|D^v|}{|D|}\mathrm{Gini}(D^v)\]
+							\item 最终选择属性\[a_*=\mathrm{arg}_{a\in A}\mathrm{min}\quad\mathrm{Gini_index}(D,a)\]
+						\end{itemize}
 			\section{神经网络}
 			\section{支持向量机}
 			\section{贝叶斯分类器}
