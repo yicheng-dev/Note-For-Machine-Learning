@@ -394,6 +394,27 @@
 							\item 属性$a$的基尼指数\[\mathrm{Gini_index}(D,a)=\sum_{v=1}^{V}\frac{|D^v|}{|D|}\mathrm{Gini}(D^v)\]
 							\item 最终选择属性\[a_*=\mathrm{arg}_{a\in A}\mathrm{min}\quad\mathrm{Gini_index}(D,a)\]
 						\end{itemize}
+				\subsection{剪枝处理}
+					\begin{itemize}
+						\item 目的：去掉一些分支来降低过拟合的风险。
+						\item 基本策略之``预剪枝''（prepruning）：在决策树生成过程中对每个结点在划分前先进行估计，若当前结点的划分不能带来决策树泛化性能提升，则停止划分并将当前结点标记为叶结点。
+						\item 基本策略之``后剪枝''（postpruning）：先从训练集生成一棵完整的决策树，然后自底向上对非叶结点考察，若将该结点的子树替换为叶结点能提升决策树的泛化性能，则将该子树替换为叶结点。
+						\item 泛化性能评估方法用2.2节的性能评估方法即可，简单地，可以使用留出法并计算错误率（精度）。
+					\end{itemize}
+					\subsubsection{预剪枝}
+						\begin{itemize}
+							\item 降低了过拟合的风险。
+							\item 显著减少决策树训练和测试时间开销。
+							\item 可能因为本身的贪心禁止了那些后续划分使泛化性能显著提升的分支的展开，带来欠拟合的风险。
+						\end{itemize}
+					\subsubsection{后剪枝}
+						\begin{itemize}
+							\item 通常比预剪枝决策树保留了更多的分支。
+							\item 欠拟合风险很小，泛化性能往往优于预剪枝决策树。
+							\item 训练时间比未剪枝或预剪枝决策树大得多。
+						\end{itemize}
+				\subsection{连续与缺失值}
+					
 			\section{神经网络}
 			\section{支持向量机}
 			\section{贝叶斯分类器}
