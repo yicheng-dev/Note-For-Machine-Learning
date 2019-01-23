@@ -442,6 +442,25 @@
 						\item 多变量决策树：非叶结点是一个形如$\sum_{i=1}^{d}w_ia_i=t$的线性分类器。在学习过程中试图建立一个合适的线性分类器。实现了斜划分。
 					\end{itemize}
 			\section{神经网络}
+				\subsection{神经元模型}
+					\begin{itemize}
+						\item 神经网络的定义：神经网络是由具有适应性的简单单元组成的广泛并行互连的网络，它的组织能够模拟生物神经系统对真实世界物体作出对交互反应。
+						\item 最基本的成分：神经元模型
+						\item M-P神经元模型：神经元接收到来自$n$个其他神经元的输入信号$x_i$，它们各通过带权重$w_i$的连接进行传递，神经元将总输入值$\sum_{i=1}^{n}w_ix_i$与神经元的阈值$\theta$进行比较，得到$\sum_{i=1}^{n}w_ix_i-\theta$，然后通过``激活函数''$f$处理以产生神经元的输出：\[y=f\big(\sum_{i=1}^{n}w_ix_i-\theta\big)\]
+						\item 激活函数的模型\begin{itemize}
+							\item 阶跃函数（不连续、不光滑）：\[\mathrm{sgn}(x)=\left\{\begin{aligned}
+							1, \quad& x\ge0;\\
+							0, \quad& x < 0
+							\end{aligned}\right.\]
+							\item Sigmoid函数（将可能在较大范围内变化的输入值挤压到$(0,1)$输出值范围内）：\[\mathrm{sigmoid}(x)=\frac{1}{1+e^{-x}}\]
+						\end{itemize}
+					\end{itemize}
+				\subsection{感知机与多层网络}
+					\begin{enumerate}[1.]
+						\item 感知机（Perceptron）：两层神经元，输入层接受外界输入信号后传递给输出层，输出层是M-P神经元，也称为``阈值逻辑单元''
+						\item 感知机实现逻辑``与''：$w_1=w_2=1,\theta=0$；逻辑``或''：$w_1=w_2=1,\theta=0.5$；逻辑``非''：$w_1=-0.6,w_2=0,\theta=-0.5$。
+						\item 将阈值看作固定输入为-1.0的``哑结点''所对应的权重$w_{n+1}$。统一为权重的学习。TODO
+					\end{enumerate}
 			\section{支持向量机}
 			\section{贝叶斯分类器}
 			\section{集成学习}
