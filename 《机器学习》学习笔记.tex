@@ -414,7 +414,33 @@
 							\item 训练时间比未剪枝或预剪枝决策树大得多。
 						\end{itemize}
 				\subsection{连续与缺失值}
-					
+					\subsubsection{连续值处理}
+						\begin{itemize}
+							\item 思路：连续属性离散化。
+							\item 最简单的策略：二分法（C4.5决策树算法中采用）。
+							\item 二分法过程：给定样本集$D$和连续属性$a$，假定$a$在$D$上出现了$n$个不同的取值，将它们从小到大排序，记为$\{a^1,a^2,\dots,a^n\}$，基于划分点$t$划分为子集$D_t^-$和$D_t^+$，前者包含在属性$a$上不大于$t$的样本。我们把每个区间$[a^i,a^{i+1})$的中位点$\frac{a^i+a^{i+1}}{2}$作为候选划分点。
+							\item 改造后的信息增益\[\mathrm{Gain}(D,a)=\max\limits_{t\in T_a}\mathrm{Gain}(D,a,t)=\max\limits_{t\in T_a}\big(\mathrm{Ent}(D)-\sum_{\lambda\in\{-,+\}}^{}\frac{|D_t^\lambda|}{|D|}\mathrm{Ent}(D_t^\lambda)\big)\]
+							\item 与离散属性的区别：若当前结点划分属性为连续属性，该属性还可以作为其后代结点的划分属性。
+						\end{itemize}
+					\subsubsection{缺失值处理}
+						\begin{itemize}
+							\item 策略：利用某个属性$a$上无缺失值样本的信息增益扩放到所有样本的信息增益。（C4.5决策树算法中采用）
+							\item 划分属性的选择过程：$\tilde{D}$表示$D$中在属性$a$上没有缺失值的样本子集；$\tilde{D}^v$表示$\tilde{D}$中在属性$a$上取值为$a^v$的样本子集（$1\le v\le V$）；$\tilde{D}_k$表示$\tilde{D}$中属于第$k$类的样本子集（$1\le k\le|\mathcal{Y}$）。为每个样本$\bm{x}$赋予一个权重$w_{\bm{x}}$\begin{align*}
+								& \textrm{无缺失值样本的比例：} & \rho=\frac{\sum_{\bm{x}\in\tilde{D}}^{}w_{\bm{x}}}{\sum_{\bm{x}\in D}^{}w_{\bm{x}}}\\
+								& \textrm{无缺失值样本中第$k$类的比例：} & \tilde{p}_k=\frac{\sum_{\bm{x}\in\tilde{D}_k}^{}w_{\bm{x}}}{\sum_{\bm{x}\in\tilde{D}}^{}w_{\bm{x}}}\\
+								& \textrm{无缺失值样本中在属性$a$上取值为$a^v$的样本的比例：} & \tilde{r}_v=\frac{\sum_{\bm{x}\in\tilde{D^v}}^{}w_{\bm{x}}}{\sum_{\bm{x}\in\tilde{D}}w_{\bm{x}}}
+							\end{align*}
+							信息增益的推广式\[\mathrm{Gain}(D,a)=\rho\times\mathrm{Gain}(\tilde{D},a)=\rho\times\big(\mathrm{Ent}(\tilde{D})-\sum_{v=1}^{V}\tilde{r}_v\mathrm{Ent}(\tilde{D}^v)\big)\]\[\mathrm{Ent}(\tilde{D})=-\sum_{k=1}^{|\mathcal{Y}|}\tilde{p}_k\log_2\tilde{p}_k\]
+							\item 已经划分属性进行样本划分的过程：\begin{itemize}
+								\item 若样本$\bm{x}$在$a$上的取值已知，则将其划入与其取值对应的子结点，样本权值在子结点中保持为$w_{\bm{x}}$
+								\item 若样本$\bm{x}$在$a$上的取值未知，则将其划入所有子结点，样本权值在与属性值$a^v$对应的子结点中调整为$\tilde{r}_v\cdot w_{\bm{x}}$。
+							\end{itemize}
+						\end{itemize}
+				\subsection{多变量决策树}
+					\begin{itemize}
+						\item 决策树所形成的分类边界的特点：轴平行。每一段划分都直接对应某个属性取值。当真实分类边界比较复杂时决策树也会相当复杂。
+						\item 多变量决策树：非叶结点是一个形如$\sum_{i=1}^{d}w_ia_i=t$的线性分类器。在学习过程中试图建立一个合适的线性分类器。实现了斜划分。
+					\end{itemize}
 			\section{神经网络}
 			\section{支持向量机}
 			\section{贝叶斯分类器}
