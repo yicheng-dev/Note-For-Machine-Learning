@@ -457,10 +457,34 @@
 					\end{itemize}
 				\subsection{感知机与多层网络}
 					\begin{enumerate}[1.]
-						\item 感知机（Perceptron）：两层神经元，输入层接受外界输入信号后传递给输出层，输出层是M-P神经元，也称为``阈值逻辑单元''
-						\item 感知机实现逻辑``与''：$w_1=w_2=1,\theta=0$；逻辑``或''：$w_1=w_2=1,\theta=0.5$；逻辑``非''：$w_1=-0.6,w_2=0,\theta=-0.5$。
-						\item 将阈值看作固定输入为-1.0的``哑结点''所对应的权重$w_{n+1}$。统一为权重的学习。TODO
+						\item 感知机（Perceptron）：两层神经元，输入层接受外界输入信号后传递给输出层，输出层是M-P神经元，也称为``阈值逻辑单元''\begin{itemize}
+							\item 感知机实现逻辑``与''：$w_1=w_2=1,\theta=0$；逻辑``或''：$w_1=w_2=1,\theta=0.5$；逻辑``非''：$w_1=-0.6,w_2=0,\theta=-0.5$。
+							\item 将阈值看作固定输入为-1.0的``哑结点''所对应的权重$w_{n+1}$。统一为权重的学习。对训练样例$(\bm{x},y)$，若当前感知机的输出为$\hat{y}$，则其权重调整如下：\[w_i\leftarrow w_i + \Delta w_i\quad\quad\Delta w_i=\eta(y-\hat{y})x_i\]其中$\eta$为$(0,1)$内的小正数，称为学习率。
+							\item 感知机只能求解线性可分问题（存在一个线性超平面区分两类模式），对于非线性可分问题会发生振荡（fluctuation）。
+						\end{itemize}
+						\item 多层前馈神经网络：每层神经元与下一层全互连，不存在同层连接和跨层连接。输入层神经元仅接收输入，隐层与输出层包含功能神经元。
+						\item 神经网络的学习过程：根据训练数据来调整神经元之间的连接权以及每个功能神经元的阈值。
 					\end{enumerate}
+				\subsection{误差逆传播算法}
+					\includegraphics[width=\linewidth]{BP}
+					\begin{itemize}
+						\item 任意参数$v$的更新估计式：$v\leftarrow v+\Delta v$
+						\item 目标：最小化训练集$D$上的累积误差\[E=\frac{1}{m}\sum_{k=1}^{m}E_k\]\[E_k=\frac{1}{2}\sum_{j=1}^{l}(\hat{y}_j^k-y_j^k)^2\]
+						\item 参数调整原则：梯度下降。例如$\Delta w_{hj}=-\eta\frac{\partial E_k}{\partial w_{hj}}$
+						\item 推导方法：参数影响的逐级传递，例如\[\frac{\partial E_k}{\partial w_{hj}}=\frac{\partial E_k}{\partial\hat{y}_j^k}\cdot\frac{\partial\hat{y}_j^k}{\partial\beta_j}\cdot\frac{\partial\beta_j}{\partial w_{hj}}\]Sigmoid函数的性质：$f'(x)=f(x)(1-f(x))$
+						\item 各个参数的调整值：\[\Delta w_{hj}=\eta g_jb_h\]\[\Delta\theta_j=-\eta g_j\]\[\Delta v_{ih}=\eta e_hx_i\]\[\Delta\gamma_h=-\eta e_h\]其中\[g_j=\hat{y}_j^k(1-\hat{y}_j^k)(y_j^k-\hat{y}_j^k)\]\[e_h=b_h(1-b_h)\sum_{j=1}^{l}w_{hj}g_j\]
+						\item BP算法执行过程：\begin{enumerate}[1.]
+							\item 输入：训练集$D=\{(\bm{x}_k,\bm{y}_k)\}_{k=1}^m$和学习率$\eta$
+							\item 在$(0,1)$范围内随机初始化网络中所有连接权和阈值
+							\item 重复计算$\hat{\bm{y}_k},g_j,e_h$并更新四个参数直到达到停止条件（如训练误差已达到一个很小的值）
+							\item 输出：连接权与阈值确定的多层前馈神经网络
+						\end{enumerate}
+						\item 累积误差逆传播（ABP）算法：省去BP算法对每个样例都更新参数都步骤，而是读取整个训练集一遍后才更新参数，直接针对累积误差最小化。
+						\item 缓解过拟合的策略\begin{itemize}
+							\item 早停：将数据分成训练集和验证集，若训练集误差降低而验证集误差升高，则停止训练。
+							\item 正则化：在误差目标函数中增加一个用于描述网络复杂度的部分。令$\lambda\in(0,1)$，如\[E=\lambda\frac{1}{m}\sum_{k=1}^{m}E_k+(1-\lambda)\sum_{i}^{}w_i^2\]
+						\end{itemize}
+					\end{itemize}
 			\section{支持向量机}
 			\section{贝叶斯分类器}
 			\section{集成学习}
