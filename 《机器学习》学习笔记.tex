@@ -485,6 +485,56 @@
 							\item 正则化：在误差目标函数中增加一个用于描述网络复杂度的部分。令$\lambda\in(0,1)$，如\[E=\lambda\frac{1}{m}\sum_{k=1}^{m}E_k+(1-\lambda)\sum_{i}^{}w_i^2\]
 						\end{itemize}
 					\end{itemize}
+				\subsection{全局最小与局部极小}
+					\begin{itemize}
+						\item 神经网络训练过程：在参数空间中寻找一组最优参数使得$E$最小。
+						\item 局部极小：对$\bm{w}^*$和$\theta^*$，若存在$\epsilon>0$使得\[\forall(\bm{w};\theta)\in\{(\bm{w};\theta)|\parallel(\bm{w};\theta)-(\bm{w}^*;\theta^*)\parallel\le\epsilon\}\]都有$E(\bm{w};\theta)\ge E(\bm{w}^*;\theta^*)$，则$(\bm{w}^*;\theta^*)$为局部极小解。
+						\item 全局最小：对参数空间中任意$(\bm{w};\theta)$都有$E(\bm{w};\theta)\ge E(\bm{w}^*;\theta^*)$，则$(\bm{w}^*;\theta^*)$为全局最小解。
+						\item 使用最为广泛的参数寻优方法：梯度下降法（容易找到局部极小）。
+						\item 跳出局部极小，进一步接近全局最小的策略：\begin{itemize}
+							\item 以多组不同参数值初始化多个神经网络（从多个不同的初始点开始搜索）；
+							\item 使用``模拟退火''技术：每一步有一定概率接受比当前解更差的结果，且接受次优解概率随时间推移而逐渐降低；
+							\item 使用随机梯度下降（即使陷入局部极小点，计算出来的梯度可能不为零）；
+							\item 遗传算法等其它启发式算法。
+						\end{itemize}
+					\end{itemize}
+				\subsection{其他常见神经网络}
+					\subsubsection{RBF网络}
+						\begin{itemize}
+							\item RBF网络（径向基网络）：一种单隐层前馈神经网络。
+							\item 隐层激活函数：径向基函数；输出层是对隐层输出的线性组合。
+							\item 设$q$为隐层神经元个数，$\bm{c}_i$和$w_i$是第$i$个隐层神经元所对应的中心和权重。径向基函数$\bm{\rho}(\bm{x},\bm{c}_i)$通常定义为样本$\bm{x}$到数据中心$\bm{c}_i$之间欧氏距离的单调函数。常用的高斯径向基函数\[\rho(\bm{x},\bm{c}_i)=e^{-\beta_i\parallel\bm{x}-\bm{c}_i\parallel^2}\]
+							\item 训练过程：通过随机采样、聚类等方法确定神经元中心$\bm{c}_i$$\rightarrow$利用BP算法确定参数$w_i$和$\beta_i$
+						\end{itemize}
+					\subsubsection{ART网络}
+						\begin{itemize}
+							\item ART网络（自适应谐振网络）：一种竞争学习型无监督神经网络。
+							\item 构成：比较层（接收输入样本，传递给识别层）、识别层（每个神经元对应一个模式类，数目也在训练过程中动态增长）、识别阈值、重置模块。
+							\item 接收比较层的输入$\rightarrow$识别层神经元相互竞争（向量距离）$\rightarrow$获胜神经元抑制其他识别层神经元的激活$\rightarrow$输入向量与获胜神经元的代表向量相似度大于识别阈值? 则当前输入样本被归为该代表向量所属类别并更新连接权 : 重置模块在识别层增设新神经元，代表向量即为当前输入向量。
+							\item 识别阈值高$\rightarrow$输入样本分类数目多且精细；识别阈值低$\rightarrow$输入样本分类数目少且粗略。
+							\item 缓解了``可塑性-稳定性窘境''，可进行增量学习或在线学习。
+						\end{itemize}
+					\subsubsection{SOM网络}
+						\begin{itemize}
+							\item SOM网络（自组织映射网络）：一种竞争学习型无监督神经网络。
+							\item 特点：将高维输入数据映射到低维空间，同时保持输入数据在高维空间的拓扑结构。获胜神经元决定了输入向量在低维中的位置。
+							\item 目标：为每个输出层神经元找到合适的权向量，达到拓扑结构的保持。
+							\item 训练过程：接收一个训练样本$\rightarrow$每个输出层神经元计算其与自身权向量的距离$\rightarrow$距离最近者获胜（最佳匹配单元）$\rightarrow$最佳匹配单元及其邻近神经元的权向量被调整使得它们与当前输入样本的距离缩小$\rightarrow$不断迭代直到收敛
+						\end{itemize}
+					\subsubsection{级联相关网络}
+						\begin{itemize}
+							\item 自适应网络的代表：网络结构也是学习目标之一。
+							\item 级联：建立层次连接的层级结构。从仅有输入输出层增加新的隐层神经元。
+							\item 相关：通过最大化新神经元的输出与网络误差之间的相关性来训练相关的参数。
+							\item 特点：无需设置网络层数、隐层神经元数目，训练速度快，数据较小时易陷入过拟合。
+						\end{itemize}
+					\subsubsection{Elman网络}
+						\begin{itemize}
+							\item 最常用的递归神经网络（RNN）之一：可出现环形，有信息反馈，网络在$t$时刻的输出状态与$t$时刻的输入及$t-1$时刻的网络状态都有关。
+							\item 结构与多层前馈网络相似，隐层神经元的输出反馈给所有隐层神经元。
+							\item 隐层神经元常采用Sigmoid激活函数，网格训练常用推广的BP算法。
+						\end{itemize}
+					\subsubsection{Bolzmann机}
 			\section{支持向量机}
 			\section{贝叶斯分类器}
 			\section{集成学习}
