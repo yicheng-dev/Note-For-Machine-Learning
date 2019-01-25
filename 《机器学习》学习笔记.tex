@@ -535,6 +535,20 @@
 							\item 隐层神经元常采用Sigmoid激活函数，网格训练常用推广的BP算法。
 						\end{itemize}
 					\subsubsection{Bolzmann机}
+						\begin{itemize}
+							\item 定义了``能量''，能量最小化时网络达理想状态。
+							\item 神经元全部为布尔型，神经元两两全连接。设状态向量$\bm{s}\in\{0,1\}^n$表示$n$个神经元的状态。则$\bm{s}$对应的Boltzmann机能量为\[E(\bm{s})=-\sum_{i=1}^{n-1}\sum_{j=i+1}^{n}w_{ij}s_is_j-\sum_{i=1}^{n}\theta_is_i\]
+							\item 若神经元以任意不依赖于输入值顺序进行更新，网络最终达到Boltzmann分布（平衡态），此时状态向量$\bm{s}$出现的概率\[P(\bm{s})=\frac{e^{-E(\bm{s})}}{\sum_{\bm{t}}^{}e^{-E(\bm{t})}}\]
+							\item 训练过程：将每个训练样本视为一个训练向量，使其出现的概率尽可能大。常用受限Boltzmann机（仅保留显层与隐层的连接）。
+							\item 受限Boltzmann机的训练方法：对比散度算法。设显、隐层神经元个数分别为$d,q$，状态向量分别为$\bm{v},\bm{h}$\[P(\bm{v}|\bm{h})=\prod_{i=1}^{d}P(v_i|\bm{h})\quad P(\bm{h}|\bm{v})=\prod_{j=1}^{q}P(h_j|\bm{v})\]
+							\item 受限Bolzmann的工作过程：对每个训练样本$\bm{v}$，先计算$P(\bm{h}|\bm{v})$，然后分布采样得到$\bm{h}$，再计算$P(\bm{v}'|\bm{h})$，从$\bm{v}'$产生$\bm{h}$。连接权的更新公式为\[\Delta w=\eta(\bm{v}\bm{h}^T-\bm{v}'\bm{h}^{'T})\]
+						\end{itemize}
+				\subsection{深度学习}
+					\begin{itemize}
+						\item 典型的深度学习模型：多隐层神经网络
+						\item 多隐层网络训练的手段：无监督逐层训练（预训练+微调）。将大量参数分组，对每组找到局部较优，联系起来进行全局寻优，节省训练开销。
+						\item 卷积神经网络（CNN）：待本书主要内容学完后，对于CNN方面将着重学习：\href{https://cs231n.github.io}{CS231n Convolutional Neural Networks for Visual Recognition}
+					\end{itemize}
 			\section{支持向量机}
 			\section{贝叶斯分类器}
 			\section{集成学习}
