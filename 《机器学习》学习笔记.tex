@@ -550,6 +550,21 @@
 						\item 卷积神经网络（CNN）：待本书主要内容学完后，对于CNN方面将着重学习：\href{https://cs231n.github.io}{CS231n Convolutional Neural Networks for Visual Recognition}
 					\end{itemize}
 			\section{支持向量机}
+				\subsection{间隔与支持向量}
+					\begin{itemize}
+						\item 划分超平面：\[\bm{w}^{\mathrm{T}}\bm{x}+n=0\]其中$\bm{w}=(w_1;w_2;\dots;w_d)$为法向量，决定方向；$b$为位移项，决定超平面与原点之间的距离。
+						\item 样本空间中任意点$\bm{x}$到超平面$(\bm{x},b)$的距离\[r=\frac{|\bm{w}^{\mathrm{T}}+b|}{\parallel\bm{w}\parallel}\]
+						\item 若超平面$(\bm{w},b)$能将训练样本正确分类，则对于任意$(\bm{x}_i,y_i)\in D$有\[\left\{\begin{aligned}
+							\bm{w}^{\mathrm{T}}\bm{x}_i+b\ge+1, & \quad y_i=+1;\\
+							\bm{w}^{\mathrm{T}}\bm{x}_i+b\le-1, & \quad y_i=-1.
+							\end{aligned}\right.\]
+						\item 支持向量：满足$\bm{w}^{\mathrm{T}}\bm{x}_i+b=\pm1,y_i=\pm1$的距离超平面最近的几个训练样本点。
+						\item 间隔：两个异类支持向量到超平面的距离之和：\[\gamma=\frac{2}{\parallel\bm{w}\parallel}\]
+						\item 支持向量机（SVM）的基本型：最大化间隔，即最小化$\parallel\bm{w}\parallel^2$\begin{align*}
+							& \min\limits_{\bm{w},b}\quad\frac{1}{2}\parallel\bm{w}\parallel^2\\
+							& \mathrm{s.t.}\quad y_i(\bm{w}^{\mathrm{T}}\bm{x}_i+b)\ge1, i=1,2,\dots,m.
+						\end{align*}
+					\end{itemize}
 			\section{贝叶斯分类器}
 			\section{集成学习}
 			\section{聚类}
