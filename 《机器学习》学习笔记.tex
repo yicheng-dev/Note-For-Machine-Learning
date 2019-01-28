@@ -28,6 +28,8 @@
 \definecolor {processblue}{cmyk}{0.96,0,0,0}
 \setCJKmainfont{STKaiti}
 
+\newtheorem{theorem}{Theorem}
+
 \renewcommand{\algorithmicrequire}{\textbf{Input:}} 
 \renewcommand{\algorithmicensure}{\textbf{Output:}}
 
@@ -564,6 +566,104 @@
 							& \min\limits_{\bm{w},b}\quad\frac{1}{2}\parallel\bm{w}\parallel^2\\
 							& \mathrm{s.t.}\quad y_i(\bm{w}^{\mathrm{T}}\bm{x}_i+b)\ge1, i=1,2,\dots,m.
 						\end{align*}
+					\end{itemize}
+				\subsection{对偶问题}
+					
+					求解6.1节基本型的一个高效方法：\begin{enumerate}[1.]
+						\item 用拉格朗日乘子法得到对偶问题，即对基本型对每条约束添加拉格朗日乘子$a_i\ge0$，得到\[L(\bm{w},b,\bm{\alpha})=\frac{1}{2}\parallel\bm{w}\parallel^2+\sum_{i=1}^{m}\alpha_i(1-y_i(\bm{w}^T\bm{x}_i+b))\]分别令对$\bm{w}$和$b$的偏导数为零再代入消去$\bm{w},b$可得到对偶问题如下：\begin{align*}
+							& \max\limits_{\bm{\alpha}}\quad\sum_{i=1}^{m}\alpha_i-\frac{1}{2}\sum_{i=1}^{m}\sum_{j=1}^{m}\alpha_i\alpha_jy_iy_j\bm{x}^{\mathrm{T}}\bm{x}_j\\
+							& \mathrm{s.t.}\quad\sum_{i=1}^{m}\alpha_iy_i=0\\
+							& \alpha_i\ge0,\quad i=1,2,\dots,m.
+						\end{align*}
+						这样在解出$\bm{\alpha}$后，求出$\bm{w}$和$b$就可以得到模型$f(\bm{x})=\sum_{i=1}^{m}\alpha_iy_i\bm{x}_i^{\mathrm{T}}\bm{x}+b$
+						\item 上述过程需满足KKT条件，即要求\[\left\{\begin{aligned}
+							\alpha_i\ge0;\\
+							y_if(\bm{x}_i)-1\ge0;\\
+							\alpha_i(y_if(\bm{x}_i)-1)=0.
+						\end{aligned}\right.\]\begin{framed}
+							$\triangle$ KKT条件对于上述结论的具体分析过程： 对于不等式约束$g(\bm{x}_i)=1-y_i(\bm{w}^{\mathrm{T}}\bm{x}_i+b)=1-y_if(\bm{x}_i)\le0$，对于$g(\bm{x}_i)<0$的情形，可通过$\nabla f(\bm{x}_i)=0$来获得最优点，等价于在$L(\bm{w},b,\alpha_i)$中对$\alpha_i$置零然后对$\nabla_{\bm{w},b}L(\bm{x}_i,\alpha_i)$置零；对于$g(\bm{x}_i)=0$的情形，类似于拉格朗日乘子法中等式约束的分析，但此时$\nabla f(\bm{x}_i^*)$的方向必与$\nabla g(\bm{x}_i^*)$相反。综上有$\alpha_i g(\bm{x}_i)=0$。由此可转化为在如下约束下最小化拉格朗日函数的问题：\[\left\{\begin{aligned}
+							1-y_if(\bm{x}_i)\le0;\\
+							\alpha_i\ge0;\\
+							\alpha_i(1-y_if(\bm{x}_i))=0.
+							\end{aligned}\right.\]
+						\end{framed}
+						由此可以总结：若$\alpha_i=0$，则该样本不会出现在求和中，没有影响；若$y_if(\bm{x}_i)=1$，则对应的样本点在最大间隔边界上，是支持向量。因此\underline{在支持向量机训练完成后，最终模型仅与支持向量有关。}
+						\item 求解第一步最后的对偶问题的方法：二次规划算法（问题规模正比于训练样本数，开销太大）；SMO算法。SMO不断执行以下两个步骤直至收敛：\begin{itemize}
+							\item 选取一对需更新的变量$\alpha_i$和$\alpha_j$；
+							\item 固定$\alpha_i$和$\alpha_j$以外的参数，求解对偶模型中获得更新后的$\alpha_i$和$\alpha_j$。
+						\end{itemize}
+						选择参数的启发式方法：\underline{使选取的两变量所对应样本之间的间隔最大}。（对它们进行更新一般会带给目标函数值更大的变化）仅考虑$\alpha_i,\alpha_j$时，因为有\[\alpha_iy_i+\alpha_jy_j=-\sum_{k\neq i,j}^{}\alpha_ky_k,\quad \alpha_i\ge0,\alpha_j\ge0\]可以消去$\alpha_j$得到单变量二次规划问题，仅有的约束是$\alpha_i\ge0$。
+						\item 确定偏移项$b$的方法：对于所有支持向量$(\bm{x}_s,y_s),s\in S$都有$y_sf(\bm{x}_s)=1$即\[y_s\bigg(\sum_{i\in S}^{}\alpha_iy_i\bm{x}_i^{\mathrm{T}}\bm{x}_s+b\bigg)=1\]现实任务中一般使用所有支持向量求解的平均值：\[b=\frac{1}{|S|}\sum_{s\in S}^{}\bigg(1/y_s-\sum_{i\in S}^{}\alpha_iy_i\bm{x}_i^{\mathrm{T}}\bm{x}_S\bigg)\]
+					\end{enumerate}
+				\subsection{核函数}
+					\begin{itemize}
+						\item 在现实任务中，原始样本空间可能不存在一个能正确划分两类样本的超平面，此时可将样本从原始空间映射到一个更高维的特征空间，使得样本在这个特征空间内线性可分。若原始空间是有限维，则必定存在这样一个高维特征空间。
+						\item 设$\phi(\bm{x})$表示将$\bm{x}$映射后的特征向量。于是在特征空间中划分超平面所对应的模型可表示为$f(\bm{x})=\bm{w}^{\mathrm{T}}\phi(\bm{x})+b$。此时对偶问题约束条件不变，目标变为\[\max\limits_{\bm{\alpha}}\quad\sum_{i=1}^{m}\alpha_i-\frac{1}{2}\sum_{i=1}^{m}\sum_{j=1}^{m}\alpha_i\alpha_jy_iy_j\phi(\bm{x}_i)^{\mathrm{T}}\phi(\bm{x}_j)\]直接在高维空间计算$\phi(\bm{x}_i)^{\mathrm{T}}\phi(\bm{x}_j)$很难，因此定义``核函数''：\[\kappa(\bm{x}_i,\bm{x}_j)=\langle\phi(\bm{x}_i),\phi(\bm{x}_j)\rangle=\phi(\bm{x}_i)^{\mathrm{T}}\phi(\bm{x}_j)\]由此``支持向量展式''为：\[f(\bm{x})=\bm{w}^{\mathrm{T}}\phi(\bm{x})+b=\sum_{i=1}^{m}\alpha_iy_i\phi(\bm{x}_i)^{\mathrm{T}}\phi(\bm{x})+b=\sum_{i=1}^{m}\alpha_iy_i\kappa(\bm{x},\bm{x}_i)+b\]
+						\item 核函数的定理如下：\begin{theorem}
+							令$\mathcal{X}$为输入空间，$\kappa(\cdot,\cdot)$是定义在$\mathcal{X}\times\mathcal{X}$上的对称函数，则$\kappa$是核函数当且仅当对于任意数据$D=\{\bm{x}_1,\bm{x}_2,\dots,\bm{x}_m\}$，``核矩阵''$\mathbf{K}$总是半定的。其中\[\mathbf{K}=\left[\begin{matrix}
+							\kappa(\bm{x}_1,\bm{x}_2) & \cdots & \kappa(\bm{x},\bm{x}_j) & \cdots & \kappa(\bm{x},\bm{x}_m) \\
+							\vdots & \ddots & \vdots & \ddots & \vdots \\
+							\kappa(\bm{x}_i,\bm{x}_1) & \cdots & \kappa(\bm{x}_i,\bm{x}_j) & \cdots & \kappa(\bm{x}_i,\bm{x}_m) \\
+							\vdots & \ddots & \vdots & \ddots & \vdots \\
+							\kappa(\bm{x}_m, \bm{x}_1) & \cdots & \kappa(\bm{x}_m,\bm{x}_j) & \cdots & \kappa(\bm{x}_m,\bm{x}_m)
+							\end{matrix}\right]\]
+						\end{theorem}
+						任何一个核函数都隐式地定义了一个``再生核希尔伯特空间''。\begin{framed}
+							$\triangle$ 半正定矩阵的定义\begin{itemize}
+								\item 广义：设$\bm{A}$是$n$阶方阵，如果对任何非零向量$\bm{X}$，都有$\bm{X}^{\mathrm{T}}\bm{A}\bm{X}\ge0$，则称$A$为半正定矩阵。
+								\item 狭义（常用）：设$\bm{A}$为实对称矩阵，若对于每个非零实向量$\bm{X}$，都有$\bm{X}^{\mathrm{T}}\bm{A}\bm{X}\ge0$，则称$\bm{A}$为半正定矩阵，称$\bm{X}^{\mathrm{T}}\bm{AX}$为半正定二次型。
+							\end{itemize}
+							$\triangle$ 再生核希尔伯特空间等空间的概念可见文章：\href{http://users.umiacs.umd.edu/~hal/docs/daume04rkhs.pdf}{From Zero to Reproducing Kernel Hilbert Spaces in Twelve Pages or Less}。这玩意有点硬核OTZ
+						\end{framed}
+						\item 支持向量机的最大变数：核函数选择。可以使用常用的核函数并通过函数组合得到。\begin{center}
+							\begin{tabular}{lll}
+								\hline
+								名称 & 表达式 & 参数\\ \hline
+								线性核 & $\kappa(\bm{x}_i,\bm{x}_j)=\bm{x}_i^{\mathrm{T}}\bm{x}_j$ & \\
+								多项式核 & $\kappa(\bm{x}_i,\bm{x}_j)=(\bm{x}_i^{\mathrm{T}}\bm{x}_j)^d$ & $d\ge1$为多项式的次数 \\
+								高斯核 & $\kappa(\bm{x}_i,\bm{x}_j)=\mathrm{exp}(-\frac{\parallel \bm{x}_i-\bm{x}_j\parallel^2}{2\sigma^2})$ & $\sigma>0$为高斯核的带宽 \\
+								拉普拉斯核 & $\kappa(\bm{x}_i,\bm{x}_j)=\mathrm{exp}(-\frac{\parallel\bm{x}_i-\bm{x}_j\parallel}{\sigma})$ & $\sigma>0$ \\
+								Sigmoid核 & $\kappa(\bm{x}_i,\bm{x}_j)=\mathrm{tanh}(\beta\bm{x}_i^{\mathrm{T}}\bm{x}_j+\theta)$ & tanh为双曲正切函数，$\beta>0,\theta<0$ \\ \hline
+							\end{tabular}
+						\end{center}
+						若$\kappa_1,\kappa_2$为核函数，则线性组合（任意正数$\gamma_1,\gamma_2$）$\gamma_1\kappa_1+\gamma_2\kappa_2$、直积$\kappa_1\otimes\kappa_2(\bm{x},\bm{z})=\kappa_1(\bm{x},\bm{z})\kappa_2(\bm{x},\bm{z})$也是核函数。对于任意函数$g(x)$，$\kappa(\bm{x},\bm{z})=g(\bm{x})\kappa_1(\bm{x},\bm{z})g(\bm{z})$也是核函数。
+					\end{itemize}
+				\subsection{软间隔与正则化}
+					\begin{itemize}
+						\item 在现实任务中很难确定合适的核函数$\rightarrow$允许支持向量机在一些样本上出错$\rightarrow$加入``软间隔''概念（区别于``硬间隔''）$\leftrightarrow$允许某些样本不满足约束$y_i(\bm{w}^{\mathrm{T}}\bm{x}_i+b)\ge1$
+						\item 优化目标可改为\[\min\limits_{\bm{w},b}\quad\frac{1}{2}\parallel\bm{w}\parallel^2+C\sum_{i=1}^{m}\ell\big(y_i(\bm{w}^{\mathrm{T}}\bm{x}_i+b)-1\big)\]其中$C>0$为常数，$\ell$是损失函数，一般为``0/1损失函数''（负则输出1，否则输出0），也可以是替代损失函数，如\begin{itemize}
+							\item hinge损失：$\ell_{hinge}(z)=\max(0, 1-z)$；
+							\item 指数损失：$\ell_{exp}(z)=\exp(-z)$；
+							\item 对率损失：$\ell_{log}(z)=\log(1+\exp(-z)).$
+						\end{itemize}
+						后续分析以hinge损失为例。
+						\item 引入松弛变量$\xi_i\ge0$，则得到``软间隔支持向量机''：\begin{align*}
+							& \min\limits_{\bm{w},b,\xi_i}\quad\frac{1}{2}\parallel\bm{w}\parallel^2+C\sum_{i=1}^{m}\xi_i \\
+							& \mathrm{s.t.}\quad y_i(\bm{w}^{\mathrm{T}}+b)\ge1-\xi_i\\
+							& \xi_i\ge0,i=1,2,\dots,m.
+						\end{align*}
+						仿照6.2节的步骤，先用拉格朗日乘子法得到拉格朗日函数（拉格朗日乘子为$\alpha_i\ge0,\mu_i\ge0$）：\[L(\bm{w},b,\bm{\alpha},\bm{\xi},\bm{\mu})=\frac{1}{2}\parallel\bm{w}\parallel^2+C\sum_{i=1}^{m}\xi_i+\sum_{i=1}^{m}\alpha_i(1-\xi_i-y_i(\bm{w}^{\mathrm{T}}\bm{x}_i+b))-\sum_{i=1}^{m}\mu_i\xi_i\]分别对$\bm{w},b,\xi_i$偏导令为零可得$\bm{w}=\sum_{i=1}^{m}\alpha_iy_i\bm{x}_i$、$0=\sum_{i=1}^{m}\alpha_iy_i$、$C=\alpha_i+\mu_i$。代入得到对偶问题\begin{align*}
+							& \max\limits_{\bm{\alpha}}\quad\sum_{i=1}^{m}\alpha_i-\frac{1}{2}\sum_{i=1}^{m}\sum_{j=1}^{m}\alpha_i\alpha_jy_iy_j\bm{x}_i^{\mathrm{T}}\bm{x}_j\\
+							& \mathrm{s.t.}\quad\sum_{i=1}^{m}\alpha_iy_i=0\\
+							& 0\le\alpha_i\le C,i=1,2,\dots,m.
+						\end{align*}
+						对此KKT条件要求：\[\left\{\begin{aligned}
+						\alpha_i\ge0, \quad \mu_i\ge0,\\
+						y_if(\bm{x}_i)-1+\xi_i\ge0,\\
+						\alpha_i(y_if(\bm{x}_i)-1+\xi_i)=0,\\
+						\xi_i\ge0,\quad \mu_i\xi_i=0
+						\end{aligned}\right.\]若$\alpha_i=0$则该样本无影响，若$\alpha_i>0$则有$y_if(\bm{x}_i)=1-\xi_i$，该样本是支持向量。若$\alpha_i<C$，则$\mu_i>0$，故$\xi_i=0$，该样本位于最大间隔边界上。若$\alpha_i=C$则有$\mu_i=0$，此时若$\xi_i\le1$则该样本落在最大间隔内部，否则该样本被错误分类。软间隔支持向量机的最终模型仍然仅与支持向量有关。
+						\item 共性：优化目标中，第一项用来描述划分超平面的间隔大小，另一项用于表述训练集上的误差。一般形式为\[\min\limits_{f}\Omega(f)+C\sum_{i=1}^{m}\ell(f(\bm{x}_i),y_i)\]其中\begin{itemize}
+							\item 该形式可称为``正则化''问题。
+							\item $\Omega(f)$：结构风险。描述模型$f$的某些性质，为引入领域知识和用户意图提供途径，并且可以削减假设空间，降低过拟合风险。它也被称为正则化项。
+							\item $\sum_{i=1}^{m}\ell(f(\bm{x}_i),y_i)$：经验风险。描述模型与训练数据的契合程度。
+							\item $C$：用于对二者进行折中。被称为正则化常数。
+						\end{itemize}
+					\end{itemize}
+				\subsection{支持向量回归}
+					\begin{itemize}
+						\item 对于回归问题，支持向量回归（SVR）假设能够容忍$f(\bm{x})$与$y$之间最多有$\epsilon$的偏差，即差值大于$\epsilon$时才计算损失$\rightarrow$以$f(\bm{x})$为中心，构建一个宽度为$2\epsilon$的间隔带。落入此带的训练样本被认为是预测正确。
+						\item SVR问题的目标：\[\min\limits_{\bm{w},b}\quad\frac{1}{2}\parallel\bm{w}\parallel^2+C\sum_{i=1}^{m}\ell_\epsilon(f(\bm{x}_i)-y_i)\]
 					\end{itemize}
 			\section{贝叶斯分类器}
 			\section{集成学习}
