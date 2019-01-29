@@ -394,7 +394,7 @@
 							\item CART决策树算法以基尼指数（Gini index）为准则选择划分属性。
 							\item 基尼值（度量数据集$D$的纯度），反映了从$D$中随机抽取两个样本，其类别标记不一致的概率，值越小则纯度越高。\[\mathrm{Gini}(D)=\sum_{k=1}^{|\mathcal{Y}|}\sum_{k'\neq k}^{}p_kp_{k'}=1-\sum_{k=1}^{|\mathcal{Y}|}p_k^2\]
 							\item 属性$a$的基尼指数\[\mathrm{Gini_index}(D,a)=\sum_{v=1}^{V}\frac{|D^v|}{|D|}\mathrm{Gini}(D^v)\]
-							\item 最终选择属性\[a_*=\mathrm{arg}_{a\in A}\mathrm{min}\quad\mathrm{Gini_index}(D,a)\]
+							\item 最终选择属性\[a_*=\mathrm{arg}_{a\in A}\mathrm{min}\quad\mathrm{Gini\_index}(D,a)\]
 						\end{itemize}
 				\subsection{剪枝处理}
 					\begin{itemize}
@@ -663,7 +663,26 @@
 				\subsection{支持向量回归}
 					\begin{itemize}
 						\item 对于回归问题，支持向量回归（SVR）假设能够容忍$f(\bm{x})$与$y$之间最多有$\epsilon$的偏差，即差值大于$\epsilon$时才计算损失$\rightarrow$以$f(\bm{x})$为中心，构建一个宽度为$2\epsilon$的间隔带。落入此带的训练样本被认为是预测正确。
-						\item SVR问题的目标：\[\min\limits_{\bm{w},b}\quad\frac{1}{2}\parallel\bm{w}\parallel^2+C\sum_{i=1}^{m}\ell_\epsilon(f(\bm{x}_i)-y_i)\]
+						\item SVR问题的目标：\[\min\limits_{\bm{w},b}\quad\frac{1}{2}\parallel\bm{w}\parallel^2+C\sum_{i=1}^{m}\ell_\epsilon(f(\bm{x}_i)-y_i)\]其中$C$为正则化常数，$\ell_\epsilon$是$\epsilon$-不敏感损失函数：\[\ell_\epsilon(z)=\left\{\begin{aligned}
+						&0, & \mathrm{if}\quad|z|\le\epsilon,\\
+						&|z|-\epsilon, & \mathrm{otherwise.}
+						\end{aligned}\right.\]
+						\item 求解过程：引入两个松弛变量$\rightarrow$引入四个拉格朗日乘子$\rightarrow$得到对偶问题$\rightarrow$加入KKT条件$\rightarrow$表出SVR解的形式、$\bm{w}$、$b$
+					\end{itemize}
+				\subsection{核方法}
+					\begin{itemize}
+						\item 不论是SVM还是SVR，学得的模型总能表示成核函数$\kappa(\bm{x},\bm{x}_i)$的线性组合。
+						\item ``表示定理''：\begin{theorem}
+							令$\mathbb{H}$为核函数$\kappa$对应的再生核希尔伯特空间，$\parallel h\parallel_{\mathbb{H}}$表示$\mathbb{H}$空间中关于$h$的范数，对于任意单调递增函数$\Omega:[0,\infty]\mapsto\mathbb{R}$和任意非负损失函数$\ell:\mathbb{R}^m\mapsto[0,\infty]$，优化问题\[\min\limits_{h\in\mathbb{H}}\quad F(h)=\Omega(\parallel h\parallel_{\mathbb{H}})+\ell\big(h(\bm{x}_1),h(\bm{x}_2),\dots,h(\bm{x}_m)\big)\]的解总可写为\[h^*(\bm{x})=\sum_{i=1}^{m}\alpha_i\kappa(\bm{x},\bm{x}_i)\]
+						\end{theorem}
+					\item 利用核方法将线性学习器拓展为非线性学习器。以线性判别分析拓展为核线性判别分析（KLDA）为例：\begin{enumerate}
+						\item 假设可通过某种映射$\phi:\mathcal{X}\mapsto\mathbb{F}$将样本映射到一个特征空间$\mathbb{F}$，然后在$\mathbb{F}$中执行线性判别分析，以求得\[h(\bm{x})=\bm{w}^{\mathrm{T}}\phi(\bm{x})\]
+						\item KLDA学习目标为\[\max\limits_{\bm{w}}J(\bm{w})=\frac{\bm{w}^{\mathrm{T}}\bm{S}_b^\phi\bm{w}}{\bm{w}^{\mathrm{T}}\bm{S}_w^\phi\bm{w}}\]设$i\in\{0,1\}$，均值及两个散度矩阵分别为\[\bm{\mu}_i^\phi=\frac{1}{m_i}\sum_{\bm{x}\in X_i}^{}\phi(\bm{x})\]\[\bm{S}_b^\phi=(\bm{\mu}_1^\phi-\bm{\mu}_0^\phi)(\bm{\mu}_1^\phi-\bm{\mu}_0^\phi)^{\mathrm{T}}\]\[\bm{S}_w^\phi=\sum_{i=0}^{1}\sum_{\bm{x}\in X_i}^{}(\phi(\bm{x})-\bm{\mu}_i^\phi)(\phi(\bm{x})-\bm{\mu}_i^\phi)^{\mathrm{T}}\]
+						\item 此时用核函数$\kappa(\bm{x},\bm{x}_i)=\phi(\bm{x}_i)^{\mathrm{T}}\phi(\bm{x})$来隐式地表达映射$\phi$和特征空间$\mathbb{F}$。对于表示定理中的优化问题，把$J(\bm{w})$作为损失函数$\ell$，令$\Omega\equiv0$，由此函数$h(\bm{x})$可写为\[h(\bm{x})=\sum_{i=1}^{m}\alpha_i\kappa(\bm{x},\bm{x}_i)\]结合步骤1中的式子，可推出\[\bm{w}=\sum_{i=1}^{m}\alpha_i\phi(\bm{x}_i)\]
+						\item 令$\mathbf{K}$为核函数$\kappa$所对应的核矩阵。令$\bm{1}_i\in\{1,0\}^{m\times1}$为第$i$类样本的指示向量。\[\hat{\bm{\mu}}_0=\frac{1}{m_0}\mathbf{K1}_0\qquad\hat{\bm{\mu}}_1=\frac{1}{m_1}\mathbf{K1}_1\]\[\mathbf{M}=(\hat{\bm{\mu}}_0-\hat{\bm{\mu}}_1)(\hat{\bm{\mu}}_0-\hat{\bm{\mu}}_1)^{\mathrm{T}}\]\[\mathbf{N}=\mathbf{KK}^{\mathrm{T}}-\sum_{i=0}^{1}m_i\hat{\bm{\mu}}_i\hat{\bm{\mu}}_i^{\mathrm{T}}\]于是学习目标等价于\[\max\limits_{\bm{\alpha}}J(\bm{\alpha})=\frac{\bm{\alpha}^{\mathrm{T}}\mathbf{M}\bm{\alpha}}{\bm{\alpha}^{\mathrm{T}}\mathbf{N}\bm{\alpha}}\]
+						\item 用LDA方法求解得到$\bm{\alpha}$，再由$h(\bm{x})=\sum_{i=1}^{m}\alpha_i\kappa(\bm{x},\bm{x}_i)$得到投影函数$h(\bm{x})$。
+					\end{enumerate}
+					\item 一个推荐的SVM开源库：\href{https://www.csie.ntu.edu.tw/~cjlin/libsvm/}{LIBSVM}
 					\end{itemize}
 			\section{贝叶斯分类器}
 			\section{集成学习}
