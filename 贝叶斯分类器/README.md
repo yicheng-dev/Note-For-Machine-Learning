@@ -1,20 +1,23 @@
 ## NaiveBayesClassifier
 
-- `NaiveBayesClassifier.java`是个人实现的朴素贝叶斯算法。支持离散、连续型属性变量，并且支持拉普拉斯修正。
-- 接口说明
-	+ 传入训练集数据及标签，指明各属性的连续性，开始训练。
+### 简介
 
-		```java
+ `NaiveBayesClassifier.java`是个人实现的朴素贝叶斯算法。支持离散、连续型属性变量，并且支持拉普拉斯修正。
+### 接口说明  
+	
+传入训练集数据及标签，指明各属性的连续性，开始训练。
+
+```java
 public int train(Vector<Vector<String>> samples, Vector<Boolean> continuous, Vector<String> labels, boolean lapCorr);
-	```
+```
 
-	+ 传入测试数据，开始测试，最后返回测试结果。
+传入测试数据，开始测试，最后返回测试结果。
 
-		```java
+```java
 public String test(Vector<String> testSample);
-	```
+```
 
-- 使用示例
+### 使用示例
 
 ```java
 Vector<Vector<String>> samples = new Vector<>();
@@ -34,7 +37,7 @@ String classifyResult = nbc.test(testSample);
 System.out.println(classifyResult);
 ```
 
-- 上述示例对应的训练集
+### 上述示例对应的训练集
 
 ```
 青绿  蜷缩  浊响  清晰  凹陷  硬滑  0.697 0.460 是  
