@@ -4,12 +4,12 @@
 - 接口说明
 	+ 传入训练集数据及标签，指明各属性的连续性，开始训练。
 
-	```java
+```java
 public int train(Vector<Vector<String>> samples, Vector<Boolean> continuous, Vector<String> labels, boolean lapCorr
 ```
 	+ 传入测试数据，开始测试，最后返回测试结果。
 
-	```java
+```java
 public String test(Vector<String> testSample
 ```
 
