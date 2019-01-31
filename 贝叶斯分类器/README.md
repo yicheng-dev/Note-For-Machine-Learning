@@ -1,14 +1,15 @@
-## NaiveBayesClassifier
+## BayesClassifier
 
 ### 简介
 
- `NaiveBayesClassifier.java`是个人实现的朴素贝叶斯算法。支持离散、连续型属性变量，并且支持拉普拉斯修正。
+ `BayesClassifier.java`是个人实现的贝叶斯分类器，包含朴素贝叶斯分类器（NB）和AODE半朴素贝叶斯分类器。NB支持离散、连续型属性变量，并且支持拉普拉斯修正。AODE仅支持离散型属性变量，强制拉普拉斯修正。
+
 ### 接口说明  
 	
 传入训练集数据及标签，指明各属性的连续性，开始训练。
 
 ```java
-public int train(Vector<Vector<String>> samples, Vector<Boolean> continuous, Vector<String> labels, boolean lapCorr);
+public int train(Vector<Vector<String>> samples, Vector<Boolean> continuous, Vector<String> labels, boolean lapCorr, int algorithm);
 ```
 
 传入测试数据，开始测试，最后返回测试结果。

@@ -7,7 +7,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class NaiveBayesClassifier {
+public class BayesClassifier {
     private Vector<TrainSample> trainSet;
     private int numOfTrainData;
     private int numOfAttributes;
@@ -15,23 +15,27 @@ public class NaiveBayesClassifier {
     private Vector<Label> labels;
     private int typeNumOfLabels;
 
+    private int algorithm; // 0 represents naive Bayes Classifier; 1 represents AODE.
     private boolean lapCorr;
     private boolean hasTrained;
 
     private Vector<Double> pc;
 
-    public NaiveBayesClassifier(){
+    public BayesClassifier(){
         trainSet = new Vector<>();
         attributeSet = new Vector<>();
         labels = new Vector<>();
         lapCorr = true;
         typeNumOfLabels = 0;
+        algorithm = 0;
         hasTrained = false;
     }
 
     public int train(Vector<Vector<String>> samples, Vector<Boolean> continuous, Vector<String> labels){
-        if (assertValidation(samples, continuous, labels) < 0)
+        if (assertValidation(samples, continuous, labels) < 0) {
+            usage();
             return -1;
+        }
         buildTrainSet(samples, continuous, labels);
         computePc();
         hasTrained = true;
@@ -43,6 +47,20 @@ public class NaiveBayesClassifier {
         return this.train(samples, continuous, labels);
     }
 
+    public int train(Vector<Vector<String>> samples, Vector<Boolean> continuous, Vector<String> labels, int algorithm){
+        if (algorithm != 0 && algorithm != 1){
+            System.out.println("The 'algorithm' should be 0 (naive) or be 1 (AODE).");
+            return -1;
+        }
+        this.algorithm = algorithm;
+        return this.train(samples, continuous, labels);
+    }
+
+    public int train(Vector<Vector<String>> samples, Vector<Boolean> continuous, Vector<String> labels, boolean lapCorr, int algorithm){
+        this.lapCorr = lapCorr;
+        return this.train(samples, continuous, labels, algorithm);
+    }
+
     public String test(Vector<String> testSample){
         if (!hasTrained){
             System.out.println("Please train the classifier firstly.");
@@ -51,15 +69,97 @@ public class NaiveBayesClassifier {
         if (assertTestValidation(testSample) < 0){
             return null;
         }
-        return bayesJudge(testSample);
+        if (algorithm == 0)
+            return naiveBayesJudge(testSample);
+        else
+            return AODE(testSample);
     }
 
-    private String bayesJudge(Vector<String> testSample){
+    private void usage(){
+        System.out.println(
+                "[usage] ----------\n" +
+                "   1. Constructor: BayesClassifier bayesClassifier = new BayesClassifier();\n" +
+                "   2. Training: bayesClassifier.train(vec1, vec2, vec3, lapCorr = true, algorithm = 0) ----------\n" +
+                "       vec1: Two-dimension String Vector of samples with attributes.\n" +
+                "       vec2: Boolean Vector which represents the continuity of each attribute.\n" +
+                "       vec3: String Vector of labels corresponding to samples.\n" +
+                "       lapCorr: 1 -> have Laplacian Correction; 0 -> have no Laplacian Correction. Default value is 1.\n" +
+                "       algorithm: 0 -> naive Bayes Classification(NB); 1 -> semi-naive Bayes Classification(AODE). Default value is 0.\n" +
+                "   3. Testing: bayesClassifier.test(vec) ---------\n" +
+                "       vec: String vector of a testing sample with attributes.");
+    }
+
+    private boolean enoughData(Vector<String> testSample){
+        return true;
+    }
+
+    private String AODE(Vector<String> testSample){
+        double maxEstimate = 0;
+        String retStr = "";
+        for (int labelIndex = 0; labelIndex < typeNumOfLabels; labelIndex++){
+            double averagedEstimate = 0;
+            for (int attrIndex = 0; attrIndex < testSample.size(); attrIndex++){
+                if (!enoughData(testSample)){
+                    continue;
+                }
+                double currEstimate = 1;
+                if (!attributeSet.get(attrIndex).get(0).continuous){
+                    int satisCiNum = 0;
+                    for (int sampleIndex = 0; sampleIndex < trainSet.size(); sampleIndex++){
+                        TrainSample sample = trainSet.get(sampleIndex);
+                        if (labels.get(sampleIndex).type == labelIndex && sample.attributes.get(attrIndex).value.equals(testSample.get(attrIndex)))
+                            satisCiNum++;
+                    }
+                    currEstimate *= ((double)satisCiNum + 1) / (numOfTrainData + typeNumOfLabels * attributeSet.get(attrIndex).size());
+                    for (int attrIndex2 = 0; attrIndex2 < testSample.size(); attrIndex2++){
+                        if (!attributeSet.get(attrIndex2).get(0).continuous){
+                            int satisCijNum = 0;
+                            for (int sampleIndex = 0; sampleIndex < trainSet.size(); sampleIndex++){
+                                TrainSample sample = trainSet.get(sampleIndex);
+                                if (labels.get(sampleIndex).type == labelIndex && sample.attributes.get(attrIndex).value.equals(testSample.get(attrIndex))
+                                    && sample.attributes.get(attrIndex2).value.equals(testSample.get(attrIndex2)))
+                                    satisCijNum++;
+                            }
+                            currEstimate *= ((double)satisCijNum + 1) / ((double)satisCiNum + attributeSet.get(attrIndex2).size());
+                        }
+                        else{
+                            //TODO: support continuous variables
+                        }
+                    }
+                }
+                else{
+                    //TODO: support continuous variables
+                }
+                averagedEstimate += currEstimate;
+            }
+            if (labelIndex == 0){
+                maxEstimate = averagedEstimate;
+                for (int i = 0; i < labels.size(); i++){
+                    if (labels.get(i).type == labelIndex){
+                        retStr = labels.get(i).value;
+                        break;
+                    }
+                }
+            }
+            else if (averagedEstimate > maxEstimate){
+                maxEstimate = averagedEstimate;
+                for (int i = 0; i < labels.size(); i++){
+                    if (labels.get(i).type == labelIndex){
+                        retStr = labels.get(i).value;
+                        break;
+                    }
+                }
+            }
+        }
+        return retStr;
+    }
+
+    private String naiveBayesJudge(Vector<String> testSample){
         double maxLog = 0;
         String retStr = "";
         for (int labelIndex = 0; labelIndex < typeNumOfLabels; labelIndex++){
             double currLog = 0.0;
-            Math.log(pc.get(labelIndex));
+            currLog += Math.log(pc.get(labelIndex));
             for (int attrIndex = 0; attrIndex < testSample.size(); attrIndex++){
                 if (!attributeSet.get(attrIndex).get(0).continuous) {
                     int satisNum = 0;
@@ -280,12 +380,12 @@ public class NaiveBayesClassifier {
         Vector<String> labels = new Vector<>();
         Vector<Boolean> continuous = new Vector<>();
         Vector<String> testSample = new Vector<>();
+
         readFromFile("data.txt", samples, labels);
         Boolean [] contArray = {false, false, false, false, false, false, true, true};
         Collections.addAll(continuous, contArray);
-
-        NaiveBayesClassifier nbc = new NaiveBayesClassifier();
-        if (nbc.train(samples, continuous, labels, true) < 0)
+        BayesClassifier nbc = new BayesClassifier();
+        if (nbc.train(samples, continuous, labels, true, 1) < 0)
             System.out.println("Train failed.");
         String [] testSampleArray = {"青绿", "蜷缩", "浊响", "清晰", "凹陷", "硬滑", "0.697", "0.460"};
         Collections.addAll(testSample, testSampleArray);
