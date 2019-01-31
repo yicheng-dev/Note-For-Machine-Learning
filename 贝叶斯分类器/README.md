@@ -29,12 +29,12 @@ Vector<String> testSample = new Vector<>();
 readFromFile("data.txt", samples, labels);
 Boolean [] contArray = {false, false, false, false, false, false, true, true};
 Collections.addAll(continuous, contArray);
-NaiveBayesClassifier nbc = new NaiveBayesClassifier();
-if (nbc.train(samples, continuous, labels, true) < 0)
+BayesClassifier bc = new BayesClassifier();
+if (bc.train(samples, continuous, labels, true) < 0)
 	System.out.println("Train failed.");
 String [] testSampleArray = {"青绿", "蜷缩", "浊响", "清晰", "凹陷", "硬滑", "0.697", "0.460"};
 Collections.addAll(testSample, testSampleArray);
-String classifyResult = nbc.test(testSample);
+String classifyResult = bc.test(testSample);
 System.out.println(classifyResult);
 ```
 
