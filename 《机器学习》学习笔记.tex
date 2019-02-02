@@ -767,8 +767,42 @@
 						\begin{itemize}
 							\item 推断：通过已知变量观测值来推测待查询变量的过程。证据：已知变量观测值。
 							\item 直接精确计算后验概率：NP-hard。
-							\item 近似推断方法：吉布斯采样（Gibbs sampling）。
+							\item 近似推断方法：吉布斯采样（Gibbs sampling）。设$\bm{Q}=\{Q_1,Q_2,\dots,Q_n\}$表示待查询变量，$\bm{E}=\{E_1,E_2,\dots,E_k\}$为证据变量，其取值为$\bm{e}=\{e_1,e_2,\dots,e_k\}$，目标是计算后验概率$P(\bm{Q}=\bm{q}\mid\bm{E}=\bm{e})$，其中$\bm{q}=\{q_1,q_2,\dots,q_n\}$是待查询变量的一组取值。吉布斯采样就是在贝叶斯网所有变量的联合状态空间与证据$\bm{E}=\bm{e}$一致的子空间中进行``随机漫步''。\begin{algorithm}
+								\caption{吉布斯采样算法}
+								\begin{algorithmic}[1]
+									\REQUIRE 贝叶斯网$B=\langle G,\Theta\rangle$，采样次数$T$，证据变量$\bm{E}$及其取值$\bm{e}$，待查询变量$\bm{Q}$及其$\bm{q}$。
+									\ENSURE $P(\bm{Q}=\bm{q}\mid\bm{E}=\bm{e})\simeq\frac{n_q}{T}$
+									\STATE $n_q=0$ \\
+									\STATE $\bm{q}^0=\textrm{对}\bm{Q}\textrm{随机赋初值}$ \\
+									\FOR{$t=1,2,\dots,T$}
+										\FOR{$Q_i\in\bm{Q}$}
+											\STATE $\bm{Z}=\bm{E}\cup\bm{Q}\backslash\{Q_i\}$\\
+											\STATE $\bm{z}=\bm{e}\cup\bm{q}^{t-1}\backslash\{q_i^{t-1}\}$\\
+											\STATE 根据$B$计算分布$P_B(Q_i\mid\bm{Z}=\bm{z})$\\
+											\STATE $q_i^t=\textrm{根据}P_B(Q_i\mid\bm{Z}=\bm{z})\textrm{采样所获}Q_i\textrm{取值}$\\
+											\STATE $\bm{q}^t=\textrm{将}\bm{q}^{t-1}\textrm{中的}q_i^{t-1}\textrm{用}q_i^t\textrm{替换}$\\
+										\ENDFOR
+									\IF{$\bm{q}^t=\bm{q}$}
+										\STATE $n_q=n_q+1$\\
+									\ENDIF
+								\ENDFOR
+								\end{algorithmic} 
+							\end{algorithm}
 						\end{itemize}
+				\subsection{EM算法}
+					\begin{itemize}
+						\item 样本中可能出现隐变量（未观测的、变量值未知的变量）。设已观测变量集为$\bm{X}$、隐变量集为$\bm{Z}$、模型参数为$\bm{\Theta}$。通过对$\bm{Z}$计算期望，最大化已观测数据的对数边际似然。\[LL(\Theta\mid\bm{X})=\ln P(\bm{X}\mid\Theta)=\ln\sum_{\bm{Z}}^{}P(\bm{X},\bm{Z}\mid\Theta)\]
+						\item EM算法（期望最大值算法）：若参数$\Theta$已知，则可根据训练数据推断出最优隐变量$\bm{Z}$的值；反之若$\bm{Z}$已知，则可对参数$\Theta$已知做极大似然估计。
+						\item 原型：\begin{enumerate}
+							\item 基于$\Theta^t$推断隐变量$\bm{Z}$的期望，记为$\bm{Z}^t$；
+							\item 基于已观测变量$\bm{X}$和$\bm{Z}^t$对参数$\Theta$做极大似然估计，记为$\Theta^{t+1}$。
+							\item 重复以上两步直至收敛。
+						\end{enumerate}
+						\item 不取$\bm{Z}$的期望，而是基于$\Theta^t$计算隐变量$\bm{Z}$的概率分布$P(\bm{Z}\mid \bm{X},\Theta^t)$。\begin{enumerate}
+							\item E步——以当前参数$\Theta^t$推断隐变量分布$P(\bm{Z}|\bm{X},\Theta^t)$，并计算对数似然$LL(\Theta\mid\bm{X},\bm{Z})$关于$\bm{Z}$的期望\[Q(\Theta\mid\Theta^t)=\mathbb{E}_{\bm{Z}\mid \bm{X},\Theta^t}LL(\Theta\mid\bm{X},\bm{Z})\]
+							\item M步——寻找参数最大化期望似然\[\Theta^{t+1}=\arg\limits_{\Theta}\max Q(\Theta\mid\Theta^t)\]
+						\end{enumerate}
+					\end{itemize}
 			\section{集成学习}
 			\section{聚类}
 			\section{降维与度量学习}
