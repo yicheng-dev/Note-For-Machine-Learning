@@ -556,7 +556,7 @@
 			\section{支持向量机}
 				\subsection{间隔与支持向量}
 					\begin{itemize}
-						\item 划分超平面：\[\bm{w}^{\mathrm{T}}\bm{x}+n=0\]其中$\bm{w}=(w_1;w_2;\dots;w_d)$为法向量，决定方向；$b$为位移项，决定超平面与原点之间的距离。
+						\item 划分超平面：\[\bm{w}^{\mathrm{T}}\bm{x}+b=0\]其中$\bm{w}=(w_1;w_2;\dots;w_d)$为法向量，决定方向；$b$为位移项，决定超平面与原点之间的距离。
 						\item 样本空间中任意点$\bm{x}$到超平面$(\bm{x},b)$的距离\[r=\frac{|\bm{w}^{\mathrm{T}}+b|}{\parallel\bm{w}\parallel}\]
 						\item 若超平面$(\bm{w},b)$能将训练样本正确分类，则对于任意$(\bm{x}_i,y_i)\in D$有\[\left\{\begin{aligned}
 							\bm{w}^{\mathrm{T}}\bm{x}_i+b\ge+1, & \quad y_i=+1;\\
@@ -804,6 +804,57 @@
 						\end{enumerate}
 					\end{itemize}
 			\section{集成学习}
+				\subsection{个体与集成}
+					\begin{itemize}
+						\item 集成学习（多分类器系统）：通过构建并结合多个学习器来完成学习任务。
+						\item 同质集成：集成中只包含同种类型的个体学习器。此时个体学习器可称为``基学习器''。
+						\item 异质集成：集成中包含不同类型的个体学习器。此时个体学习器可称为``组件学习器''。
+						\item 个体学习器的准确性和多样性存在冲突。研究核心：产生并结合``好而不同''的个体学习器。
+						\item 集成学习方法\begin{itemize}
+							\item 个体学习器间强依赖，必须串行生成$\rightarrow$Boosting
+							\item 个体学习器间不强依赖，可同时生成$\rightarrow$Bagging和Random Forest
+						\end{itemize}
+					\end{itemize}
+				\subsection{Boosting}
+					\begin{itemize}
+						\item Boosting：一族可将弱学习器提升为强学习器的算法。先从初始训练集训练出一个基学习器，根据其表现调整训练样本分布，更多关注做错的训练样本，基于此训练下一个基学习器。如此直至基学习器数目达到事先指定的值$T$，最终将$T$个基学习器加权结合。
+						\item AdaBoost算法基于``加性模型$H(\bm{x})=\sum_{t=1}^{T}\alpha_th_t(\bm{x})$，最小化指数损失函数\[\ell_{\mathrm{exp}}(H\mid\mathcal{D})=\mathbb{E}_{\bm{x}\sim\mathcal{D}}[e^{-f(\bm{x})H(\bm{x})}]\]\begin{algorithm}
+							\caption{AdaBoost算法}
+							\begin{algorithmic}[1]
+								\REQUIRE 训练集$D=\{(\bm{x}_1,y_1),(\bm{x}_2,y_2),\dots,(\bm{x}_m,y_m)\}$，基学习算法$\mathfrak{L}$，训练轮数$T$
+								\ENSURE $H(\bm{x})=\mathrm{sign}\big(\sum_{t=1}^{T}\alpha_th_t(\bm{x})\big)$
+								\STATE $\mathcal{D}_1(\bm{x})=1/m$ \\
+								\FOR{$t=1,2,\dots,T$}
+									\STATE $h_t=\mathfrak{L}(D,\mathcal{D}_t)$ \\
+									\STATE $\epsilon_t = P_{\bm{x}\sim\mathcal{D}_t}(h_t(\bm{x})\neq f(\bm{x}))$ \\
+									\IF{$\epsilon_t>0.5$}
+										\STATE \textbf{break}\\
+									\ENDIF
+									\STATE $\alpha_t=\frac{1}{2}\ln(\frac{1-\epsilon_t}{\epsilon_t})$\\
+									\STATE $\mathcal{D}_{t+1}(\bm{x})=\frac{\mathcal{D}_t(\bm{x})\exp(-\alpha_tf(\bm{x})h_t(\bm{x}))}{Z_t}$\\
+								\ENDFOR
+							\end{algorithmic} 
+						\end{algorithm}
+						\item 使用``指数损失函数''的合理性：求指数损失函数对$H(\bm{x})$的偏导并令零可得到\[H(\bm{x})=\frac{1}{2}\ln\frac{P(f(x)=1\mid\bm{x})}{P(f(x)=-1\mid\bm{x})}\]由此$\mathrm{sign}(H(\bm{x}))=\arg\limits_{y\in\{-1,1\}}\max P(f(x)=y\mid\bm{x})$达到了贝叶斯最优错误率。说明指数损失函数是分类任务原本0/1损失函数的一致的替代损失函数，且连续可微。
+						\item 分类器权重更新公式的推导：使$\alpha_th_t$最小化指数损失函数：\[\ell_{\mathrm{exp}}(\alpha_th_t\mid\mathcal{D}_t)=\mathbb{E}_{\bm{x}\sim\mathcal{D}_t}\big[e^{-f(\bm{x})\alpha_th_t(\bm{x})}\big]=e^{-\alpha_t}(1-\epsilon_t)+e^{\alpha_t}\epsilon_t\]对$\alpha_t$求偏导并令零，可得到权重更新公式\[\alpha_t=\frac{1}{2}\ln\bigg(\frac{1-\epsilon_t}{\epsilon_t}\bigg)\]
+						\item 样本分布更新公式的推导：\begin{enumerate}
+							\item 理想的下一轮基学习器$h_t$能纠正$H_{t-1}$的全部错误，即最小化\[\ell_{\mathrm{exp}}(H_{t-1}+h_t\mid\mathcal{D})=\mathbb{E}_{\bm{x}\sim\mathcal{D}}[e^{-f(\bm{x})H_{t-1}(\bm{x})}e^{-f(\bm{x})h_t(\bm{x})}]\]
+							\item 使用泰勒展式，可将$e^{-f(\bm{x})h_t(\bm{x})}$近似为$1-f(\bm{x})h_t(\bm{x})+\frac{f^2(\bm{x})h_t^2(\bm{x})}{2}=\frac{3}{2}-f(\bm{x})h_t(\bm{x})$
+							\item 理想的基学习器\begin{align*}
+								h_t(\bm{x}) = & \arg\limits_{h}\min\ell_{\mathrm{exp}}(H_{t-1}+h\mid\mathcal{D})\\
+								=& \arg\limits_{h}\max\mathbb{E}_{\bm{x}\sim\mathcal{D}}\bigg[\frac{e^{-f(\bm{x})H_{t-1}(\bm{x})}}{\mathbb{E}_{\bm{x}\sim\mathcal{D}}[e^{-f(\bm{x})H_{t-1}(\bm{x})}]}f(\bm{x})h(\bm{x})\bigg]
+							\end{align*}
+							其中$\mathbb{E}_{\bm{x}\sim\mathcal{D}}[e^{-f(\bm{x})H_{t-1}(\bm{x})}]$是一个常数。
+							\item 令\[\mathcal{D}_t(\bm{x})=\frac{\mathcal{D}(\bm{x})e^{-f(\bm{x})H_{t-1}(\bm{x})}}{\mathbb{E}_{\bm{x}\sim\mathcal{D}}[e^{-f(\bm{x})H_{t-1}(\bm{x})}]}\]等价于令\[h_t(\bm{x})=\arg\limits_{h}\max\mathbb{E}_{\bm{x}\sim\mathcal{D}_t}[f(\bm{x})h(\bm{x})]\]
+							\item \begin{align*}
+								\mathcal{D}_{t+1}(\bm{x}) = & \frac{\mathcal{D}(\bm{x})e^{-f(\bm{x})H_t(\bm{x})}}{\mathbb{E}_{\bm{x}\sim\mathcal{D}}[e^{-f(\bm{x})H_t(\bm{x})}]}\\
+								= & \frac{\mathcal{D}(\bm{x})e^{-f(\bm{x})H_{t-1}(\bm{x})}e^{-f(\bm{x})\alpha_th_t(\bm{x})}}{\mathbb{E}_{\bm{x}\sim\mathcal{D}}[e^{-f(\bm{x})H_t(\bm{x})}]}\\
+								= & \mathcal{D}_t(\bm{x})\cdot e^{-f(\bm{x})\alpha_th_t(\bm{x})}\frac{\mathbb{E}_{\bm{x}\sim\mathcal{D}}[e^{-f(\bm{x})H_{t-1}(\bm{x})}]}{\mathbb{E}_{\bm{x}\sim\mathcal{D}}[e^{-f(\bm{x})H_{t}(\bm{x})}]}
+							\end{align*}
+						\end{enumerate}
+						\item 重赋权法：在训练的每一轮中，根据样本分布为每个训练样本重新赋予一个权重。在训练的每一轮检查当前生成的基学习器是否满足基本条件，一旦不满足，则抛弃当前基学习器，学习过程停止。
+						\item 重采样法：在训练的每一轮中，根据样本分布对训练集重新进行采样，再据此对基学习器进行训练。可以不抛弃不满足条件的当前基学习器，使学习过程维持到预设的$T$轮完成。
+					\end{itemize}
 			\section{聚类}
 			\section{降维与度量学习}
 			\section{特征选择与稀疏学习}
