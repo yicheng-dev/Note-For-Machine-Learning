@@ -865,7 +865,7 @@
 					 		\item 采样方法：自助采样法
 					 		\item 输出结合方法：投票法（分类）、平均法（回归）
 					 		\item 算法描述（$\mathcal{D}_{bs}$是自助采样产生的样本分布）\begin{algorithm}
-					 			\caption{AdaBoost算法}
+					 			\caption{Bagging算法}
 					 			\begin{algorithmic}[1]
 					 				\REQUIRE 训练集$D=\{(\bm{x}_1,y_1),(\bm{x}_2,y_2),\dots,(\bm{x}_m,y_m)\}$，基学习算法$\mathfrak{L}$，训练轮数$T$
 					 				\ENSURE $H(\bm{x})=\arg\limits_{y\in\mathcal{Y}}\max\sum_{t=1}^{T}\mathbb{I}(h_t(\bm{x})=y)$
@@ -939,6 +939,56 @@
  									\STATE $h'=\mathfrak{L}(D')$;
  								\end{algorithmic} 
  							\end{algorithm}
+ 							\item 一般采用交叉验证法或留一法。
+ 							\item 研究表明，将初级学习器的输出类概率作为次级学习器的输入属性，用多响应线性回归（MLR）作为次级学习算法效果较好。
+ 						\end{itemize}
+ 				\subsection{多样性}
+ 					\subsubsection{误差-分歧分解}
+ 						\begin{itemize}
+ 							\item 对示例$\bm{x}$，学习器$h_i$的``分歧''（ambiguity）：\[A(h_i\mid\bm{x})=\big(h_i(\bm{x})-H(\bm{x})\big)^2\]
+ 							\item 集成的``分歧''（反映个体学习器的多样性）：\[\overline{A}(h\mid\bm{x})=\sum_{i=1}^{T}w_iA(h_i\mid\bm{x})=\sum_{i=1}^{T}w_i\big(h_i(\bm{x})-H(\bm{x})\big)^2\]
+ 							\item 个体学习器$h_i$和集成$H$的平方误差\[E(h_i\mid\bm{x})=\big(f(\bm{x})-h_i(\bm{x})\big)^2\]\[E(H\mid\bm{x})=\big(f(\bm{x})-H(\bm{x})\big)^2\]
+ 							\item 对于全样本，个体的泛化误差、分歧项为\[E_i=\int E(h_i\mid\bm{x})p(\bm{x})d\bm{x}\]\[A_i=\int A(h_i\mid\bm{x})p(\bm{x})d\bm{x}\]
+ 							\item 对于全样本，集成的泛化误差、个体学习器泛化误差的加权均值、个体学习器的加权分分歧值为\[E=\int E(H\mid\bm{x})p(\bm{x})d\bm{x}\]\[\overline{E}=\sum_{i=1}^{T}w_iE_i\]\[\overline{A}=\sum_{i=1}^{T}w_iA_i\]
+ 							\item 误差-分歧分解（个体学习器准确性越高、多样性越大，则集成越好）\[E=\overline{E}-\overline{A}\]
+ 						\end{itemize}
+ 					\subsubsection{多样性度量}
+ 					
+ 						以如下二分类任务为例（$a+b+c+d=m$）\begin{center}
+ 							\begin{tabular}{c|cc}
+ 								\hline
+ 								& $h_i=+1$ & $h_i=-1$ \\ \hline
+ 								$h_j=+1$ & $a$ & $c$ \\
+ 								$h_j=-1$ & $b$ & $d$ \\ \hline
+ 							\end{tabular}
+ 						\end{center}
+ 						\begin{itemize}
+ 							\item 不合度量（disagreement measure）：值越大多样性越大\[dis_{ij}=\frac{b+c}{m}\]
+ 							\item 相关系数（correlation coefficient）：无关0，正相关正，负相关负\[\rho_{ij}=\frac{ad-bc}{\sqrt{(a+b)(a+c)(c+d)(b+d)}}\]
+ 							\item $Q$-统计量：与相关系数符号相同，且$|Q_{ij}|\ge|\rho_{ij}|$\[Q_{ij}=\frac{ad-bc}{ad+bc}\]
+ 							\item $\kappa$-统计量：若两个分类器在$D$上完全一致则$\kappa=1$，若仅是偶然达成一致，则$\kappa=0$。\[\kappa=\frac{p_1-p_2}{1-p_2}\]\[p_1=\frac{a+d}{m}\]\[p_2=\frac{(a+b)(a+c)+(c+d)(b+d)}{m^2}\]
+ 						\end{itemize}
+ 					\subsubsection{多样性增强}
+ 						\begin{itemize}
+ 							\item 数据样本扰动：基于采样法。不稳定基学习器（样本扰动敏感）：决策树、神经网络；稳定基学习器：线性学习器、支持向量机、朴素贝叶斯、$k$近邻学习器。
+ 							\item 输入属性扰动：\begin{algorithm}
+ 								\caption{随机子空间算法}
+ 								\begin{algorithmic}[1]
+ 									\REQUIRE 训练集$D=\{(\bm{x}_1,y_1),(\bm{x}_2,y_2),\dots,(\bm{x}_m,y_m)\}$，基学习算法$\mathfrak{L}$，基学习器数$T$，子空间属性数$d'$
+ 									\ENSURE $H(\bm{x})=\arg\limits_{y\in\mathcal{Y}}\max\sum_{t=1}^{T}\mathbb{I}(h_t(\mathrm{Map}_{\mathcal{F}_t}(\bm{x}))=y)$
+ 									\FOR{$t=1,2,\dots,T$}
+ 										\STATE $\mathcal{F}_t=\mathrm{RS}(D,d')$\\
+ 										\STATE $D_t=\mathrm{Map}_{\mathcal{F}_t}(D)$\\
+ 										\STATE $h_t=\mathfrak{L}(D_t)$\\
+ 									\ENDFOR
+ 								\end{algorithmic} 
+ 							\end{algorithm}
+ 							\item 输出表示扰动：对输出表示进行操纵\begin{itemize}
+ 								\item 翻转法：随机改变一些训练样本的标记
+ 								\item 输出调制法：将分类输出转化为回归输出后建构个体学习器
+ 								\item ECOC法：利用纠错输出码将多分类任务拆解为一系列二分类任务
+ 							\end{itemize}
+ 							\item 算法参数扰动：随机设置不同的参数。对参数较少的算法，可通过将其学习过程中某些环节用其他类似方式代替。
  						\end{itemize}
 			\section{聚类}
 			\section{降维与度量学习}
