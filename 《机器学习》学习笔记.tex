@@ -991,6 +991,81 @@
  							\item 算法参数扰动：随机设置不同的参数。对参数较少的算法，可通过将其学习过程中某些环节用其他类似方式代替。
  						\end{itemize}
 			\section{聚类}
+				\subsection{聚类任务}
+					
+					假定样本集$D=\{\bm{x}_1,\bm{x}_2,\dots,\bm{x}_m\}$包含$m$个无标记样本，聚类算法将$D$划分为$k$个不相交的簇$\{C_l\mid l=1,2,\dots,k\}$，其中$C_{l'}\cap_{l'\neq l}C_l=\empty$且$D=\cup_{l=1}^kC_l$。用$\lambda_j\in\{1,2,\dots,k\}$表示样本$\bm{x}_j$的``簇标记''，即$\bm{x}_j\in C_{\lambda_j}$。于是聚类结果可以用簇标记向量$\bm{\lambda}=(\lambda_1;\lambda_2;\dots;\lambda_m)$表示。
+				\subsection{性能度量}
+					\begin{itemize}
+						\item 聚类性能度量分类：外部指标（与某个参考模型进行比较）；内部指标（直接考察聚类结果）
+						\item 设带星号的为参考模型对应的变量。考虑两两配对，定义\begin{align*}
+							& a = |SS|, & SS=\{(\bm{x}_i,\bm{x}_j)\mid\lambda_i=\lambda_j,\lambda_i^*=\lambda_j^*,i<j\}\\
+							& b = |SD|, & SD=\{(\bm{x}_i,\bm{x}_j)\mid\lambda_i=\lambda_j,\lambda_i^*\neq\lambda_j^*,i<j\}\\
+							& c = |DS|, & DS=\{(\bm{x}_i,\bm{x}_j)\mid\lambda_i\neq\lambda_j,\lambda_i^*=\lambda_j^*,i<j\}\\
+							& d = |DD|, & DD=\{(\bm{x}_i,\bm{x}_j)\mid\lambda_i\neq\lambda_j,\lambda_i^*\neq\lambda_j^*,i<j\}
+						\end{align*}
+						其中$a+b+c+d=m(m-1)/2$
+						\item 外部指标（以下三者均在$[0,1]$区间，越大越好）\begin{itemize}
+							\item Jaccard系数（JC）\[\mathrm{JC}=\frac{a}{a+b+c}\]
+							\item FM指数（FMI）\[\mathrm{FMI}=\sqrt{\frac{a}{a+b}\cdot\frac{a}{a+c}}\]
+							\item Rand指数（RI）\[\mathrm{RI}=\frac{2(a+d)}{m(m-1)}\]
+						\end{itemize}
+						\item 各种距离函数\begin{itemize}
+							\item 簇$C$内样本间平均距离\[\mathrm{avg}(C)=\frac{2}{|C|(|C|-1)}\sum_{1\le i<j\le|C|}^{}\mathrm{dist}(\bm{x}_i,\bm{x}_j)\]
+							\item 簇$C$内样本间最远距离\[\mathrm{diam}(C)=\max_{1\le i<j\le|C|}\mathrm{dist}(\bm{x}_i,\bm{x}_j)\]
+							\item 簇$C_i$与簇$C_j$最近样本间距离\[d_{\mathrm{min}}(C_i,C_j)=\min_{\bm{x}_i\in C_i,\bm{x}_j\in C_j}\mathrm{dist}(\bm{x}_i,\bm{x}_j)\]
+							\item 簇$C_i$与簇$C_j$中心点间距离\[d_{\mathrm{cen}}(C_i,C_j)=\mathrm{dist}(\bm{\mu}_i,\bm{\mu}_j)\]其中\[\bm{\mu}=\frac{1}{|C|}\sum_{1\le i\le|C|}^{}\bm{x}_i\]
+						\end{itemize}
+					\item 内部指标（DBI越小越好，DI越大越好）\begin{itemize}
+						\item DB指数（DBI）\[\mathrm{DBI}=\frac{1}{k}\sum_{i=1}^{k}\max\limits_{j\neq i}\bigg(\frac{\mathrm{avg}(C_i)+\mathrm{avg}(C_j)}{d_{\mathrm{cen}}(\bm{\mu}_i,\bm{\mu}_j)}\bigg)\]
+						\item Dunn指数（DI）\[\mathrm{DI}=\min\limits_{1\le i\le k}\bigg\{\min\limits_{j\neq i}\bigg(\frac{d_{\mathrm{min}}(C_i,C_j)}{\max_{1\le l\le k}\mathrm{diam}(C_l)}\bigg)\bigg\}\]
+					\end{itemize}
+					\end{itemize}
+				\subsection{距离计算}
+					\begin{itemize}
+						\item 函数$\mathrm{dist}(\cdot,\cdot)$若是一个距离度量，需满足四个基本性质：\begin{enumerate}
+							\item 非负性：$\mathrm{dist}(\bm{x}_i,\bm{x}_j)\ge0$
+							\item 同一性：$\mathrm{dist}(\bm{x}_i,\bm{x}_j)=0$当且仅当$\bm{x}_i=\bm{x}_j$
+							\item 对称性：$\mathrm{dist}(\bm{x}_i,\bm{x}_j)=\mathrm{dist}(\bm{x}_j,\bm{x}_i)$
+							\item 直递性：$\mathrm{dist}(\bm{x}_i,\bm{x}_j)\le\mathrm{dist}(\bm{x}_i,\bm{x}_k)+\mathrm{dist}(\bm{x}_k.\bm{x}_j)$
+						\end{enumerate}
+						\item 给定样本$\bm{x}_i=(x_{i1};x_{i2};\dots;x_{in})$和$\bm{x}_j=(x_{j1};x_{j2};\dots;x_{jn})$。闵可夫斯基距离（Minkowski distance）  【可用于有序属性】：\[\mathrm{dist}_{\mathrm{mk}}(\bm{x}_i,\bm{x}_j)=\bigg(\sum_{u=1}^{n}|x_{iu}-x_{ju}|^p\bigg)^{\frac{1}{p}}\]$p=2$时即为欧式距离，$p=1$时即为曼哈顿距离\[\mathrm{dist_{ed}}(\bm{x}_i,\bm{x}_j)=||\bm{x}_i-\bm{x}_j||_2=\sqrt{\sum_{u=1}^{n}|x_{iu}-x_{ju}|^2}\]\[\mathrm{dist_{man}}(\bm{x}_i,\bm{x}_j)=||\bm{x}_i-\bm{x}_j||_1=\sum_{u=1}^{n}|x_{iu}-x_{ju}|\]
+						\item VMD距离【可用于无序属性】：$m_{u,a,i}$表示在第$i$个样本簇中在属性$u$上取值为$a$的样本数。\[\mathrm{VDM}_p(a,b)=\sum_{i=1}^{k}\bigg|\frac{m_{u,a,i}}{m_{u,a}}-\frac{m_{u,b,i}}{m_{u,b}}\bigg|^p\]
+						\item 结合两种距离，设有$n_c$个有序属性、$n-n_c$个无序属性\[\mathrm{MinkovDM}_p(\bm{x}_i,\bm{x}_j)=\bigg(\sum_{u=1}^{n_c}|x_{iu}-x_{ju}|^p+\sum_{u=n_c+1}^{n}\mathrm{VDM}_p(x_{iu},x_{ju})\bigg)^{\frac{1}{p}}\]
+						\item 加权距离（以加权闵可夫斯基距离为例）\[\mathrm{dist_{wmk}}(\bm{x}_i,\bm{x}_j)=(w_i\cdot|x_{i1}-x_{j1}|^p+\dots+w_n\cdot|x_{in}-x_{jn}|^p)^{\frac{1}{p}}\]
+					\end{itemize}
+				\subsection{原型聚类}
+					\begin{itemize}
+						\item 原型：样本空间中具有代表性的点
+						\item 原型聚类算法：先对原型进行初始化，再对原型进行迭代更新求解。
+					\end{itemize}
+					\subsubsection{$k$-均值算法}
+						\begin{itemize}
+							\item 目标：最小化平方误差$E=\sum_{i=1}^{k}\sum_{\bm{x}\in C_i}^{}||\bm{x}-\bm{\mu}_i||_2^2$（NP-hard）。故用贪心策略近似求解。
+							\item 算法描述\begin{algorithm}
+								\caption{$k$-均值算法}
+								\begin{algorithmic}[1]
+									\REQUIRE 样本集$D=\{\bm{x}_1,\bm{x}_2,\dots,\bm{x}_m\}$、聚类簇数$k$.
+									\ENSURE 簇划分$\mathcal{C}=\{C_1,C_2,\dots,C_k\}$
+									\STATE 从$D$中随机选择$k$个样本作为初始均值向量$\{\bm{\mu}_1,\bm{\mu}_2,\dots,\bm{\mu}_k\}$; \\
+									\REPEAT
+									\STATE 令$C_i=\emptyset\quad(1\le i\le k)$; \\
+									\FOR{$j=1,2,\dots,m$}
+										\STATE 计算样本$\bm{x}_j$与各均值向量$\bm{\mu}_i\quad(1\le i\le k)$的距离：\[d_{ji}=||\bm{x}_j-\bm{\mu}_i||_2\] \\
+										\STATE 根据距离最近的均值向量确定$\bm{x}_j$的簇标记：\[\lambda_j=\arg\min_{i\in\{1,2,\dots,k\}}d_{ji}\] \\
+										\STATE 将样本$\bm{x}_j$划入相应的簇：$C_{\lambda_j}=C_{\lambda_j}\cup\{\bm{x}_j\}$; \\
+									\ENDFOR
+									\FOR{$i=1,2,\dots,k$}
+										\STATE 计算新均值向量：$\bm{\mu}_i'=\frac{1}{|C_i|}\sum_{\bm{x}\in C_i}^{}\bm{x}$; \\
+										\IF{$\bm{\mu}_i'\neq\bm{\mu}_i$}
+											\STATE 将当前均值向量$\bm{\mu}_i$更新为$\bm{\mu}_i'$; \\
+										\ELSE
+											\STATE 保持当前均值向量不变; \\
+										\ENDIF
+									\ENDFOR
+									\UNTIL{当前均值向量均未更新}
+								\end{algorithmic} 
+							\end{algorithm}
+						\end{itemize}
 			\section{降维与度量学习}
 			\section{特征选择与稀疏学习}
 			\section{计算学习理论}
