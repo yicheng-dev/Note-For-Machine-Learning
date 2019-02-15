@@ -1067,6 +1067,30 @@
 							\end{algorithm}
 						\end{itemize}
 					\subsubsection{学习向量量化}
+						\begin{itemize}
+							\item LVQ假设数据样本带有类别标记，利用这些监督信息辅助聚类。
+							\item 目标：学得一组$n$维原型向量$\{\bm{p}_1,\bm{p}_2,\dots,\bm{p}_q\}$，每个原型向量代表一个聚类簇，簇标记$t_i\in\mathcal{Y}$
+							\item 算法描述\begin{algorithm}
+								\caption{学习向量量化算法}
+								\begin{algorithmic}[1]
+									\REQUIRE 样本集$D=\{(\bm{x}_1,y_1),(\bm{x}_2,y_2),\dots,(\bm{x}_m,y_m)\}$、原型向量个数$q$、各原型向量预设的类别标记$\{t_1,t_2,\dots,t_q\}$、学习率$\eta\in(0,1)$
+									\ENSURE 原型向量$\{\bm{p}_1,\bm{p}_2,\dots,\bm{p}_q\}$
+									\STATE 初始化一组原型向量$\{\bm{p}_1,\bm{p}_2,\dots,\bm{p}_q\}$; \\
+									\REPEAT
+										\STATE 从样本集$D$随机选取样本$(\bm{x}_j,y_j)$; \\
+										\STATE 计算样本$\bm{x}_j$与$\bm{p}_i(1\le i\le q)$的距离：$d_{ji}=||\bm{x}_j-\bm{p}_i||_2$; \\
+										\STATE 找出与$\bm{x}_j$距离最近的原型向量$p_{i^*}$，$i^*=\arg\min_{i\in\{1,2,\dots,q\}}d_{ji}$; \\
+										\IF{$y_j=t_{i^*}$}
+											\STATE $\bm{p}'=\bm{p}_{i^*}+\eta\cdot(\bm{x}_j-\bm{p}_{i^*})$; \\
+										\ELSE
+											\STATE $\bm{p}'=\bm{p}_{i^*}-\eta\cdot(\bm{x}_j-\bm{p}_{i^*})$; \\
+										\ENDIF
+										\STATE 将原型向量$\bm{p}_{i^*}$更新为$\bm{p}'$; \\
+									\UNTIL{满足停止条件}
+								\end{algorithmic} 
+							\end{algorithm}
+							\item 学得原型向量后，对任意样本，它被划入与其距离最近的原型向量所代表的簇中。形成了对样本空间的Voronoi划分。
+						\end{itemize}
 			\section{降维与度量学习}
 			\section{特征选择与稀疏学习}
 			\section{计算学习理论}
