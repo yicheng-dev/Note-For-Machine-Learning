@@ -1212,7 +1212,39 @@
 					\begin{itemize}
 						\item 密采样：任意测试样本$\bm{x}$附近任意小的$\delta$距离范围内总能找到一个训练样本。若属性维数过多，满足密采样条件所需的样本过于巨大，导致数据样本稀疏、距离计算困难，引起``维数灾难''。
 						\item 降维：通过某种数学变换将原始高维属性空间转变为一个低维子空间。
-						\item 
+						\item 多维缩放（MDS）：设$m$个样本在原始空间的距离矩阵为$\mathbf{D}\in\mathbb{R}^{m\times m}$，其中第$i$行第$i$列为样本$\bm{x}_i$到$\bm{x}_j$的距离。目标是获得样本在$d'$维空间的表示$\mathbf{Z}\in\mathbb{R}^{d'\times m},d'\le d$，且任意两个样本在$d'$维空间中的欧氏距离等于原始空间中的距离，即$||\bm{z}_i-\bm{z}_j||=dist_{ij}$。\begin{algorithm}
+							\caption{MDS算法}
+							\begin{algorithmic}[1]
+								\REQUIRE 距离矩阵$\mathbf{D}\in\mathbb{R}^{m\times m}$，其元素$dist_{ij}$为样本$\bm{x}_i$到$\bm{x}_j$的距离、低维空间维数$d'$
+								\ENSURE 矩阵$\tilde{\mathbf{V}}\tilde{\bm{\Lambda}}^{1/2}\in\mathbb{R}^{m\times d'}$，每行是一个样本的低维坐标
+								\STATE 计算$dist_{i\cdot}^2=\frac{1}{m}\sum_{j=1}^{m}dist_{ij}^2$及$dist_{\cdot j}^2,dist_{\cdot\cdot}^2$; \\
+								\STATE 根据$b_{ij}=-\frac{1}{2}(dist_{ij}^2-dist_{i\cdot}^2-dist_{\cdot j}^2+dist(\cdot\cdot)^2)$计算矩阵$\mathbf{B}$; \\
+								\STATE 对矩阵$\mathbf{B}$做特征值分解; \\
+								\STATE 取$\tilde{\bm{\Lambda}}$为$d'$个最大特征值所构成的对角矩阵，$\tilde{\mathbf{V}}$为相应的特征向量矩阵; \\
+							\end{algorithmic} 
+						\end{algorithm}
+						\item 线性降维方法：给定$d$维空间的样本$\mathbf{X}=(\bm{x}_1,\bm{x}_2,\dots,\bm{x}_m)\in\mathbb{R}^{d\times m}$，变换之后得到$d'\le d$维空间中的样本\[\mathbf{Z}=\mathbf{W}^T\mathbf{X}\]其中$\mathbf{W}\in\mathbb{R}^{d\times d'}$是变换矩阵，$\mathbf{Z}\in\mathbb{R}^{d'\times m}$是样本在新空间中的表达。
+					\end{itemize}
+				\subsection{主成分分析}
+					\begin{itemize}
+						\item 对于正交属性空间中的样本点，若存在一个超平面，满足``最近重构性''（样本点到这个超平面的距离都足够近）、``最大可分性''（样本点在这个超平面上的投影能尽可能分开），可分别从这两点推导出主成分分析。
+						\item 设投影变换后得到的新坐标系为$W=(\bm{w}_1,\bm{w}_2,\dots,\bm{w}_{d'})$，则PCA的优化目标为\begin{align*}
+							& \max\limits_{\mathbf{W}} \quad\mathrm{tr}(\mathbf{W}^T\mathbf{XX}^T\mathbf{W})\\
+							& \mathrm{s.t.} \quad\mathbf{W}^T\mathbf{W}=\mathbf{W}
+						\end{align*}
+						\item 算法描述\begin{algorithm}
+							\caption{PCA算法}
+							\begin{algorithmic}[1]
+								\REQUIRE 样本集$D=\{\bm{x}_1,\bm{x}_2,\dots,\bm{x}_m\}$、低维空间维数$d'$
+								\ENSURE 投影矩阵$\mathbf{W}^*=(\bm{w}_1,\bm{w}_2,\dots,\bm{w}_{d'})$
+								\STATE 对所有样本进行中心化：$\bm{x}_i\leftarrow\bm{x}_i-\frac{1}{m}\sum_{i=1}^{m}\bm{x}_i$; \\
+								\STATE 计算样本的协方差矩阵：$\mathbf{X}\mathbf{X}^T$; \\
+								\STATE 对协方差矩阵$\mathbf{XX}^T$做特征值分解; \\
+								\STATE 取最大的$d'$个特征值所对应的特征向量$\bm{w}_1,\bm{w}_2,\dots,\bm{w}_{d'}$; \\
+							\end{algorithmic} 
+						\end{algorithm}
+						\item $d'$值可由用户指定，也可以通过kNN+交叉验证自动取值，也可取使得$\sum_{i=1}^{d'}\lambda_i/\sum_{i=1}^{d}\lambda_i\ge t$的最小$d'$值。
+						\item 降维（丢弃$d-d'$个特征值的特征向量）的意义：增大采样密度、减小噪声影响。
 					\end{itemize}
 			\section{特征选择与稀疏学习}
 			\section{计算学习理论}
