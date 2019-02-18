@@ -1246,6 +1246,87 @@
 						\item $d'$值可由用户指定，也可以通过kNN+交叉验证自动取值，也可取使得$\sum_{i=1}^{d'}\lambda_i/\sum_{i=1}^{d}\lambda_i\ge t$的最小$d'$值。
 						\item 降维（丢弃$d-d'$个特征值的特征向量）的意义：增大采样密度、减小噪声影响。
 					\end{itemize}
+				\subsection{核化线性降维}
+					\begin{itemize}
+						\item 核主成分分析（KPCA）：基于核技巧对PCA进行核化，实现非线性降维。
+						\item KPCA的过程\begin{enumerate}
+							\item 由PCA中的$\mathbf{XX}^T\bm{w}_i=\lambda_i\bm{w}_i$，设$\bm{z}_i$是样本点$\bm{x}_i$在高维特征空间的像，得$(\sum_{i=1}^{m}\bm{z}_i\bm{z}_i^T)\bm{w}_j=\lambda_j\bm{w}_j$且\[\bm{w}_i=\sum_{i=1}^{m}\bm{z}_i\frac{\bm{z}_i^T\bm{w}_j}{\lambda_j}=\sum_{i=1}^{m}\bm{z}_i\alpha_i^j\]
+							\item 假设$\bm{z}_i$是由原始属性空间中的样本点$\bm{x}_i$通过映射$\phi$产生，则\[\bigg(\sum_{i=1}^{m}\phi(\bm{x}_i)\phi(\bm{x}_i)^T\bigg)\bm{w}_j=\lambda_j\bm{w}_j\]\[\bm{w}_j=\sum_{i=1}^{m}\phi(\bm{x}_i)\alpha_i^j\]
+							\item 引入核函数\[\kappa(\bm{x}_i,\bm{x}_j)=\phi(\bm{x}_i)^T\phi(\bm{x}_j)\]\[\mathbf{K}\bm{\alpha}^j=\lambda_j\bm{\alpha}^j\]取$\mathbf{K}$最大的$d'$个特征值所对应的特征向量即可。
+							\item 对新样本$\bm{x}$，其投影后的第$j$维坐标为\[z_j=\bm{w}_j^T\phi(\bm{x})=\sum_{i=1}^{m}\alpha_i^j\phi(\bm{x}_i)^T\phi(\bm{x})=\sum_{i=1}^{m}\alpha_i^j\kappa(\bm{x}_i,\bm{x})\]
+						\end{enumerate}
+					\end{itemize}
+				\subsection{流形学习}
+				
+					流形在局部具有欧氏空间的性质，能用欧氏距离进行计算。可以在局部建立降维映射关系。
+					\subsubsection{等度量映射}
+						\begin{itemize}
+							\item 等度量映射（Isomap）：低维流形嵌入到高维空间之后，直接在高维空间中计算直线距离具有误导性。计算``测地线''距离时，可以利用流形在局部上与欧氏空间同胚这一性质，对每个点基于欧氏距离找出近邻点，然后建立一个近邻连接图，求两点之间最短路径即可。（Dijkstra算法等）
+							\item 算法描述\begin{algorithm}
+								\caption{Isomap算法}
+								\begin{algorithmic}[1]
+									\REQUIRE 样本集$D=\{\bm{x}_1,\bm{x}_2,\dots,\bm{x}_m\}$、近邻参数$k$、低维空间维数$d'$
+									\ENSURE 样本集$D$在低维空间的投影$Z=\{\bm{z}_1,\bm{z}_2,\dots,\bm{z}_m\}$
+									\FOR{$i=1,2,\dots,m$}
+										\STATE 确定$\bm{x}_i$的$k$近邻; \\
+										\STATE $\bm{x}_i$与$k$近邻点之间的距离设置为欧氏距离，与其他点的距离设置为无穷大; \\
+									\ENDFOR
+									\STATE 调用最短路径算法计算任意两样本点之间的距离$\mathrm{dist}(\bm{x}_i,\bm{x}_j)$; \\
+									\STATE 将$\mathrm{dist}(\bm{x}_i,\bm{x}_j)$作为MDS算法的输入; \\
+									\RETURN MDS算法的输出
+								\end{algorithmic} 
+							\end{algorithm}
+							\item 新样本映射到低维空间的权宜之计：将训练样本的高维空间坐标作为输入、低维空间坐标作为输出，训练一个回归学习器对新样本的低维空间进行预测。
+						\end{itemize}
+					\subsubsection{局部线性嵌入}
+						\begin{itemize}
+							\item 局部线性嵌入（LLE）：试图保持邻域内样本之间的线性关系。希望诸如$\bm{x}_i=w_{ij}\bm{x}_j+w_{ik}\bm{x}_k+w_{il}\bm{x}_l$在低维空间中得以保持。
+							\item LLE操作过程：\begin{enumerate}
+								\item 为每个样本$\bm{x}_i$找到其近邻下标集合$Q_i$，再计算基于$Q_i$中的样本点对$\bm{x}_i$进行线性重构的系数$\bm{w}_i$\begin{align*}
+									& \min\limits_{\bm{w}_1,\bm{w}_2,\dots,\bm{w}_m}\quad\sum_{i=1}^{m}\bigg|\bigg|\bm{x}_i-\sum_{j\in Q_i}^{}w_{ij}\bm{x}_j\bigg|\bigg|_2^2\\
+									& \mathrm{s.t.}\quad\sum_{j\in Q_i}^{}w_{ij}=1
+								\end{align*}
+								\item 在低维空间中保持$\bm{w}_i$不变，于是$\bm{x}_i$对应的低维空间坐标$\bm{z}_i$通过下式求解\[\min\limits_{\bm{z}_1,\bm{z}_2,\dots,\bm{z}_m}\sum_{i=1}^{m}\bigg|\bigg|\bm{z}_i-\sum_{j\in Q_i}^{}w_{ij}\bm{z}_j\bigg|\bigg|_2^2\]
+								\item 令$\mathbf{Z}=(\bm{z}_1,\bm{z}_2,\dots,\bm{z}_m)\in\mathbb{R}^{d'\times m}$及$(\mathbf{W})_{ij}=w_ij$\[\mathbf{M}=(\mathbf{I}-\mathbf{W})^{\textrm{T}}(\mathbf{I}-\mathbf{W})\]于是优化目标化为\begin{align*}
+									& \min\limits_{\mathbf{Z}}\quad\mathrm{tr}(\mathbf{ZMZ}^{\textrm{T}}) \\
+									& \mathrm{s.t.}\quad \mathbf{ZZ}^{\textrm{T}}=\mathbf{I}
+								\end{align*}
+								\item 对$\mathbf{M}$进行特征值分解，最小的$d'$个特征值所对应的特征向量组成的矩阵为$\mathbf{Z}^{\textrm{T}}$。
+							\end{enumerate}
+							\item 算法描述\begin{algorithm}
+								\caption{LLE算法}
+								\begin{algorithmic}[1]
+									\REQUIRE 样本集$D=\{\bm{x}_1,\bm{x}_2,\dots,\bm{x}_m\}$、近邻参数$k$、低维空间维数$d'$
+									\ENSURE 样本集$D$在低维空间的投影$Z=\{\bm{z}_1,\bm{z}_2,\dots,\bm{z}_m\}$
+									\FOR{$i=1,2,\dots,m$}
+										\STATE 确定$\bm{x}_i$的$k$近邻; \\
+										\STATE 求得$w_{ij},j\in Q_i$; \\
+										\STATE 对于$j\notin Q_i$，令$w_{ij}=0$; \\
+									\ENDFOR
+									\STATE 根据$\mathbf{M}=(\mathbf{I}-\mathbf{W})^{\textrm{T}}(\mathbf{I}-\mathbf{W})$求出$\mathbf{M}$; \\
+									\STATE 对$\mathbf{M}$进行特征值分解; \\
+									\RETURN $\mathbf{M}$的最小$d'$个特征值对应的特征向量
+								\end{algorithmic} 
+							\end{algorithm}
+						\end{itemize}
+				\subsection{度量学习}
+					\begin{itemize}
+						\item 距离度量模型的推广\begin{enumerate}
+							\item 若每个维度等权重，对两个$d$维样本$\bm{x}_i$和$\bm{x}_j$，平方欧氏距离为\[\mathrm{dist}_{\mathrm{ed}}^2(\bm{x}_i,\bm{x}_j)=||\bm{x}_i-\bm{x}_j||_2^2=dist_{ij,1}^2+dist_{ij,2}^2+\dots+dist_{ij,d}^2\]
+							\item 若不同属性的权重不同，引入属性权重$\bm{w}$。$w_i\ge0$，$\mathbf{W}=\mathrm{diag}(\bm{w})$是一个对角矩阵，$(\mathbf{W})_{ii}=w_i$。\begin{align*}
+								\mathrm{dist}_{\mathrm{wed}}^2(\bm{x}_i,\bm{x}_j) = & ||\bm{x}_i-\bm{x}_j||_2^2 \\
+								= & w_1\cdot dist_{ij,1}^2+w_2\cdot dist_{ij, 2}^2 +\dots +w_d\cdot dist_{ij,d}^2\\
+								= & (\bm{x}_i-\bm{x}_j)^{\textrm{T}}\mathbf{W}(\bm{x}_i-\bm{x}_j)
+							\end{align*}
+							\item 若属性之间相关，则$\mathbf{W}$被替换为半正定对称矩阵$\mathbf{M}$，得到``马氏距离''为\[\mathrm{dist}_{\mathrm{mah}}^2=(\bm{x}_i-\bm{x}_j)^{\textrm{T}}\mathbf{M}(\bm{x}_i-\bm{x}_j)=||\bm{x}_i-\bm{x}_j||_\mathbf{M}^2\]度量学习就是对度量矩阵$\mathbf{M}$进行学习。
+						\end{enumerate}
+						\item 近邻成分分析（NCA）：对于任意样本$\bm{x}_j$，其对$\bm{x}_i$分类结果影响的概率为\[p_{ij}=\frac{\exp\big(-||\bm{x}_i-\bm{x}_j||_{\mathbf{M}}^2\big)}{\sum_{l}^{}\exp\big(-||\bm{x}_i-\bm{x}_l||_{\mathbf{M}}^2\big)}\]以留一法正确率最大化为目标，$\bm{x}_i$留一法正确率为\[p_i=\sum_{j\in\Omega_i}^{}p_{ij}\]其中$\Omega_i$表示与$\bm{x}_i$属于相同类别的样本的下标集合。整个样本集的留一法正确率：\[\sum_{i=1}^{m}p_i=\sum_{i=1}^{m}\sum_{j\in\Omega_i}^{}p_{ij}\]考虑$\mathbf{M}=\mathbf{PP}^{\textrm{T}}$，则NCA的优化目标为\[\min\limits_{\mathbf{P}}\quad1-\sum_{i=1}^{m}\sum_{j\in\Omega_i}^{}\frac{\exp\big(-||\mathbf{P}^{\textrm{T}}\bm{x}_i-\mathbf{P}^{\textrm{T}}\bm{x}_j||_2^2\big)}{\sum_{l}^{}\exp\big(-||\mathbf{P}^{\textrm{T}}\bm{x}_i-\mathbf{P}^{\textrm{T}}\bm{x}_l||_2^2\big)}\]
+						\item 若已知某些样本相似、某些样本不相似，定义``必连''约束集合$\mathcal{M}$与``勿连''约束集合$\mathcal{C}$。其中$(\bm{x}_i,\bm{x}_j)\in\mathcal{M}$表示$\bm{x}_i$与$\bm{x}_j$相似，$(\bm{x}_i,\bm{x}_k)\in\mathcal{C}$表示$\bm{x}_i$与$\bm{x}_k$不相似。构造如下凸优化问题\begin{align*}
+						\min\limits_{\mathbf{M}}\quad & \sum_{(\bm{x}_i,\bm{x}_j)\in\mathcal{M}}^{}||\bm{x}_i-\bm{x}_j||_{\mathbf{M}}^2 \\
+						\mathrm{s.t.}\quad & \sum_{(\bm{x}_i,\bm{x}_k)\in\mathcal{C}}^{}||\bm{x}_i-\bm{x}_k||_{\mathbf{M}}\ge1\\
+						& \mathbf{M}\succeq0
+						\end{align*}
+					\end{itemize}
 			\section{特征选择与稀疏学习}
 			\section{计算学习理论}
 			\section{半监督学习}
