@@ -1091,7 +1091,129 @@
 							\end{algorithm}
 							\item 学得原型向量后，对任意样本，它被划入与其距离最近的原型向量所代表的簇中。形成了对样本空间的Voronoi划分。
 						\end{itemize}
+					\subsubsection{高斯混合聚类}
+						\begin{itemize}
+							\item 高斯分布、EM算法、极大似然法和聚类的结合
+							\item 服从高斯分布的概率密度函数\[p(\bm{x\mid \bm{\mu},\bm{\Sigma}})=\frac{1}{(2\pi)^{\frac{n}{2}}|\bm{\Sigma}|^{\frac{1}{2}}}e^{-\frac{1}{2}(\bm{x}-\bm{\mu})^T\bm{\Sigma}^{-1}(\bm{x}-\bm{\mu})}\]
+							\item 高斯混合分布\[p_{\mathcal{M}}(\bm{x})=\sum_{i=1}^{k}\alpha_i\cdot p(\bm{x}\mid\bm{\mu}_i,\bm{\Sigma}_i)\]
+							\item 生成样本$\bm{x}_j$的每一个高斯混合成分的后验分布（记为$\gamma_{ji}$）\[p_{\mathcal{M}}(z_j=i\mid\bm{x}_j)=\frac{P(z_j=i)\cdot p_{\mathcal{M}}(\bm{x}_j\mid z_j=i)}{p_{\mathcal{M}}(\bm{x}_j)}=\frac{\alpha_i\cdot p(\bm{x}_j\mid \bm{\mu}_i,\bm{\Sigma}_i)}{\sum_{l=1}^{k}\alpha_l\cdot p(\bm{x}_j\mid\bm{\mu}_l,\bm{\Sigma}_l)}\]
+							\item 算法描述\begin{algorithm}
+								\caption{高斯混合聚类算法}
+								\begin{algorithmic}[1]
+									\REQUIRE 样本集$D=\{\bm{x}_1,\bm{x}_2,\dots,\bm{x}_m\}$、高斯混合成分个数$k$
+									\ENSURE 簇划分$\mathcal{C}=\{C_1,C_2,\dots,C_k\}$
+									\STATE 初始化高斯混合分布的模型参数$\{(\alpha_i,\bm{\mu}_i,\bm{\Sigma}_i)\mid 1\le i\le k\}$; \\
+									\REPEAT
+										\FOR{$j=1,2,\dots,m$}
+											\STATE 计算$\bm{x}_j$由各混合成分生成的后验概率，即$\gamma_{ji}=p_{\mathcal{M}}(z_j=i\mid\bm{x}_j)(1\le i\le k)$; \\
+										\ENDFOR
+										\FOR{$i=1,2,\dots,k$}
+											\STATE 计算新均值向量：$\bm{\mu}_i'=\frac{\sum_{j=1}^{m}\gamma_{ji}\bm{x}_j}{\sum_{j=1}^{m}\gamma_{ji}}$; \\
+											\STATE 计算新协方差矩阵：$\bm{\Sigma}_i'=\frac{\sum_{j=1}^{m}\gamma_{ji}(\bm{x}_j-\bm{\mu}_i')(\bm{x}_j-\bm{\mu}_i')^T}{\sum_{j=1}^{m}\gamma_{ji}}$; \\
+											\STATE 计算新混合系数：$\alpha_i'=\frac{\sum_{j=1}^{m}\gamma_{ji}}{m}$; \\
+										\ENDFOR
+										\STATE 将模型参数$\{(\alpha_i,\bm{\mu}_i,\bm{\Sigma}_i)\mid 1\le i\le k\}$更新为$\{(\alpha_i',\bm{\mu}_i',\bm{\Sigma}_i')\mid 1\le i\le k\}$; \\
+									\UNTIL{满足停止条件}
+									\STATE $C_i=\emptyset(1\le i\le k)$; \\
+									\FOR{$j=1,2,\dots,m$}
+										\STATE 根据$\lambda_j=\arg\max_{i\in\{1,2,\dots,k\}}\gamma_{ji}$确定$\bm{x}_j$的簇标记$\lambda_j$; \\
+										\STATE 将$\bm{x}_j$划入相应的簇：$C_{\lambda_j}=C_{\lambda_j}\cup\{\bm{x}_j\}$; \\
+									\ENDFOR
+								\end{algorithmic} 
+							\end{algorithm}
+						\end{itemize}
+				\subsection{密度聚类}
+					\begin{itemize}
+						\item 密度聚类算法从样本密度的角度考察样本之间的可连接性，基于可连接样本不断扩展聚类簇以获得最终的聚类结果。
+						\item DBSCAN算法基于一组邻域参数$(\epsilon,MinPts)$来刻画样本分布的紧密程度\begin{itemize}
+							\item $\epsilon-$邻域：$N_\epsilon(\bm{x}_j)=\{\bm{x}_i\in D\mid\mathrm{dist}(\bm{x}_i,\bm{x}_j)\le\epsilon\}$
+							\item 核心对象：$|N_\epsilon(\bm{x}_j)|\ge MinPts$ $\rightarrow$ $\bm{x}_j$是一个核心对象
+							\item $\bm{x}_j$位于$\bm{x}_i$的$\epsilon-$邻域中 $\cap$ $\bm{x}_i$是核心对象 $\rightarrow$ $\bm{x}_j$由$\bm{x}_i$密度直达
+							\item 对$\bm{x}_i$与$\bm{x}_j$若存在样本序列$\bm{p}_1,\bm{p}_2,\dots,\bm{p}_n$，其中$\bm{p}_1=\bm{x}_i,\bm{p}_n=\bm{x}_j$，且$\bm{p}_{i+1}$由$\bm{p}_i$密度直达 $\rightarrow$ $\bm{x}_j$由$\bm{x}_i$密度可达
+							\item 对$\bm{x}_i$与$\bm{x}_j$，若存在$\bm{x}_k$使得$\bm{x}_i$与$\bm{x}_j$均由$\bm{x}_k$密度可达 $\rightarrow$ $\bm{x}_i$与$\bm{x}_j$密度相连
+							\item 簇：由密度可达关系导出的最大的密度相连样本集合，满足``连接性''（簇中任意两个样本密度相连）和``最大性''（簇中任意一个样本密度可达的样本都在该簇中）
+						\end{itemize}
+						\item 算法描述\begin{algorithm}
+							\caption{DBSCAN算法}
+							\begin{algorithmic}[1]
+								\REQUIRE 样本集$D=\{\bm{x}_1,\bm{x}_2,\dots,\bm{x}_m\}$、邻域参数$(\epsilon,MinPts)$
+								\ENSURE 簇划分$\mathcal{C}=\{C_1,C_2,\dots,C_k\}$
+								\STATE 初始化核心对象集合：$\Omega = \emptyset$; \\
+								\FOR{$j=1,2,\dots,m$}
+									\STATE 确定样本$\bm{x}_j$的$\epsilon$-邻域$N_\epsilon(\bm{x}_j)$; \\
+									\IF{$|N_\epsilon(\bm{x}_j)|\ge MinPts$}
+										\STATE 将样本$\bm{x}_j$加入核心对象集合：$\Omega = \Omega\cup\{\bm{x}_j\}$; \\
+									\ENDIF
+								\ENDFOR
+								\STATE 初始化聚类簇数和未访问样本集合：$k=0,\quad \Gamma = D$;\\
+								\WHILE{$\Omega\neq\emptyset$}
+									\STATE 记录当前未访问样本集合：$\Gamma_{\mathrm{old}}=\Gamma$; \\
+									\STATE 随机选取一个核心对象$\bm{o}\in\Omega$，初始化队列$Q=\langle\bm{o}\rangle$; \\
+									\STATE $\Gamma=\Gamma\backslash\{\bm{o}\}$; \\
+									\WHILE{$Q\neq\emptyset$}
+										\STATE 取出队列$Q$中的某个样本$\bm{q}$; \\
+										\IF{$|N_\epsilon(\bm{q})|\ge MinPts$}
+											\STATE 令$\Delta = N_\epsilon(\bm{q})\cap\Gamma$; \\
+											\STATE 将$\Delta$中的样本加入队列$Q$; \\
+											\STATE $\Gamma = \Gamma\backslash\Delta$; \\
+										\ENDIF
+									\ENDWHILE
+									\STATE $k=k+1$，生成聚类簇$C_k=\Gamma_{\mathrm{old}}\backslash\Gamma$; \\
+									\STATE $\Omega = \Omega\backslash C_k$; \\
+								\ENDWHILE
+							\end{algorithmic} 
+						\end{algorithm}
+					\end{itemize}
+				\subsection{层次聚类}
+					\begin{itemize}
+						\item AGNES算法：自底向上层次聚类。先将每个样本视作一个初始聚类簇，再不断合并距离最近的两个聚类簇，达到预设的聚类簇个数。
+						\item 聚类簇之间的距离计算\begin{align*}
+							& \textrm{最小距离：}d_{\mathrm{min}}(C_i,C_j)=\min\limits_{\bm{x}\in C_i,\bm{z}\in C_j}\mathrm{dist}(\bm{x},\bm{z}) \\
+							& \textrm{最大距离：}d_{\mathrm{max}}(C_i,C_j)=\max\limits_{\bm{x}\in C_i,\bm{z}\in C_j}\mathrm{dist}(\bm{x},\bm{z}) \\
+							& \textrm{平均距离：}d_{\mathrm{avg}}(C_i,C_j)=\frac{1}{|C_i||C_j|}\sum_{\bm{x}\in C_i}^{}\sum_{\bm{z}\in C_j}^{}\mathrm{dist}(\bm{x},\bm{z})
+						\end{align*}
+						\item 算法描述\begin{algorithm}
+							\caption{AGNES算法}
+							\begin{algorithmic}[1]
+								\REQUIRE 样本集$D=\{\bm{x}_1,\bm{x}_2,\dots,\bm{x}_m\}$、簇距离度量函数$d$、聚类簇数$k$.
+								\ENSURE 簇划分$\mathcal{C}=\{C_1,C_2,\dots,C_k\}$
+								\FOR{$j=1,2,\dots,m$}
+									\STATE $C_j=\{\bm{x}_j\}$; \\
+								\ENDFOR
+								\FOR{$i=1,2,\dots,m$}
+									\FOR{$j=i+1,\dots,m$}
+										\STATE $M(j,i)=M(i,j)=d(C_i,C_j)$; \\
+									\ENDFOR
+								\ENDFOR
+								\STATE 设置当前聚类簇个数：$q=m$; \\
+								\WHILE{$q>k$}
+									\STATE 找出距离最近的两个聚类簇$C_{i^*}$和$C_{j^*}$; \\
+									\STATE 合并$C_{i^*}$和$C_{j^*}$：$C_{i^*}=C_{i^*}\cup C_{j^*}$; \\
+									\FOR{$j=j^*+1, j^*+2, \dots, q$}
+										\STATE 将聚类簇$C_j$重编号为$C_{j-1}$; \\
+									\ENDFOR
+									\STATE 删除距离矩阵$M$的第$j^*$行与第$j^*$列; \\
+									\FOR{$j=1,2,\dots,q-1$}
+										\STATE $M(j,i^*)=M(i^*,j)=d(C_{i^*}, C_j)$; \\
+									\ENDFOR
+									\STATE $q = q-1$; \\
+								\ENDWHILE
+							\end{algorithmic} 
+						\end{algorithm}
+					\end{itemize}
 			\section{降维与度量学习}
+				\subsection{$k$近邻学习}
+					\begin{itemize}
+						\item 机制：给定测试样本，基于某种距离度量找出训练集中与其最靠近的$k$个训练样本，并基于它们采用投票法或平均法进行预测。
+						\item 是一种``懒惰学习''（训练时间开销为零，收到测试样本后才进行处理，相对于``急切学习''）。
+						\item 最近邻分类器的泛化错误率不超过贝叶斯最优分类器的两倍。
+					\end{itemize}
+				\subsection{低维嵌入}
+					\begin{itemize}
+						\item 密采样：任意测试样本$\bm{x}$附近任意小的$\delta$距离范围内总能找到一个训练样本。若属性维数过多，满足密采样条件所需的样本过于巨大，导致数据样本稀疏、距离计算困难，引起``维数灾难''。
+						\item 降维：通过某种数学变换将原始高维属性空间转变为一个低维子空间。
+						\item 
+					\end{itemize}
 			\section{特征选择与稀疏学习}
 			\section{计算学习理论}
 			\section{半监督学习}
