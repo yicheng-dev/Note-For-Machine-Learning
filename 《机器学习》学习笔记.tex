@@ -1328,8 +1328,92 @@
 						\end{align*}
 					\end{itemize}
 			\section{特征选择与稀疏学习}
+				\subsection{子集搜索与评价}
+					\begin{itemize}
+						\item 特征：属性；相关特征：对当前学习任务有用的属性；无关特征：对当前学习任务用处不大的属性；特征选择：从给定的特征集合中选择出相关特征子集的过程。
+						\item 特征选择与降维是处理高维数据的两大主流技术。
+						\item 冗余特征：包含的信息能从其它特征推演出来的一类特征。
+						\item 没有任何领域知识作为先验假设 $\rightarrow$ 遍历所有的子集 $\rightarrow$ 组合爆炸
+						\item 两个关键环节\begin{enumerate}
+							\item 子集搜索：贪心策略（仅考虑使本轮选定集最优）\begin{itemize}
+								\item 前向搜索：将每个特征看作一个候选子集，对$d$个候选单特征子集进行评价，将最优的单特征添加进去，然后逐渐从剩余的候选单特征子集中择优添加，直到添加后的子集不如上一轮选定集，此时将上一轮选定的集合作为特征选择结果。
+								\item 后向搜索：从完整的特征集合开始逐渐去掉特征。
+								\item 双向搜索：每一轮逐渐增加选定相关特征同时减少无关特征。
+							\end{itemize}
+							\item 子集评价：基于信息增益。假定样本属性均为离散型。对属性子集$A$，假定根据其取值将$D$分成了$V$个子集$\{D^1,D^2,\dots,D^V\}$，则属性子集$A$的信息增益为\[\mathrm{Gain}(A)=\mathrm{Ent}(D)-\sum_{v=1}^{V}\frac{|D^v|}{|D|}\mathrm{Ent}(D^v)\]\[\mathrm{Ent}(D)=-\sum_{k=1}^{|\mathcal{Y}|}p_k\log_2p_k\]信息增益越大，则该特征子集包含的有助于分类的信息越多。扩展：只要能估算样本标记信息对$D$的真实划分与特征子集对$D$的划分这两者的差异即可。
+						\end{enumerate}
+					\end{itemize}
+				\subsection{过滤式选择}
+					\begin{itemize}
+						\item 先对数据集进行特征选择，再训练学习器。
+						\item Relief方法：利用``相关统计量''度量特征的重要性。\begin{enumerate}
+							\item 对于每个示例$\bm{x}_i$，先在$\bm{x}_i$的同类样本中寻找最近邻$\bm{x}_{i,\mathrm{nh}}$，即为``猜中近邻''。
+							\item 再从$\bm{x}_i$的异类样本中寻找其最近邻$\bm{x}_{i,\mathrm{nm}}$，即为``猜错近邻''。
+							\item 相关统计量在属性$j$的分量为\[\delta^j=\sum_{i}^{}-\mathrm{diff}(x_i^j,x_{i,\mathrm{nh}}^j)^2+\mathrm{diff}(x_i^j,x_{i,\mathrm{nm}}^j)^2\]若属性$j$为离散型，则$\mathrm{diff}(x_a^j,x_b^j)$为1或0，否则为$|x_a^j-x_b^j|$，此时每个属性上的取值需规范化到$[0,1]$区间。
+							\item Relief在数据集上多次采样并相应地估计相关统计量。
+						\end{enumerate}
+						\item Relief-F方法：处理多分类问题。设$p_l$为第$l$类样本在数据集$D$中所占的比例。\[\delta^j=\sum_{i}^{}-\mathrm{diff}(x_i^j,x_{i,\mathrm{nh}}^j)^2+\sum_{l\neq k}^{}\big(p_l\times \mathrm{diff}(x_i^j,x_{i,\mathrm{i,l,\mathrm{nm}}}^j)^2\big)\]
+					\end{itemize}
+				\subsection{包裹式选择}
+					\begin{itemize}
+						\item 包裹式特征选择：直接把最终将要使用的学习器的性能作为特征子集的评价准则。计算开销很大，但从最终学习器性能来看比过滤式特征选择更好。
+						\item LVW算法：在Las Vegas方法框架下使用随机策略进行子集搜索，以最终分类器的误差为特征子集评价准则。\begin{framed}
+							拉斯维加斯算法不会得到不正确的解，一旦用拉斯维加斯算法找到一个解，那么这个解一定就是正确的解，但有时用拉斯维加斯算法找不到解。而蒙特卡洛方法一定会给出解，虽然给出的解未必满足要求。若无时间限制，则两者都能给出满足要求的解。
+						\end{framed}
+						\begin{algorithm}
+							\caption{LLE算法}
+							\begin{algorithmic}[1]
+								\REQUIRE 数据集$D$、特征集$A$、学习算法$\mathfrak{L}$、停止条件控制参数$T$
+								\ENSURE 特征子集$A^*$
+								\STATE $E=\infty$; \\
+								\STATE $d=|A|$; \\
+								\STATE $A^*=A$; \\
+								\STATE $t=0$; \\
+								\WHILE{$t<T$}
+									\STATE 随机产生特征子集$A'$; \\
+									\STATE $d'=|A'|$; \\
+									\STATE $E'=\mathrm{CrossValidation}(\mathfrak{L}(D^{A'}))$; \\
+									\IF{$(E'<E)\vee((E'=E)\wedge(d'<d))$}
+										\STATE $t=0$; \\
+										\STATE $E=E'$; \\
+										\STATE $d=d'$; \\
+										\STATE $A^*=A'$; \\
+									\ELSE
+										\STATE $t=t+1$; \\
+									\ENDIF
+								\ENDWHILE
+							\end{algorithmic} 
+						\end{algorithm}
+					\end{itemize}
+				\subsection{嵌入式选择与L$_1$正则化}
+					\begin{itemize}
+						\item 嵌入式特征选择：将特征选择过程与学习器训练过程融合，在同一优化过程中完成。
+						\item 线性回归模型中，使用$\mathrm{L}_1$范数正则化，比$\mathrm{L}_2$范数正则化更易于获得稀疏解，即有更多的分量为零。此时的优化目标称为LASSO：\[\min\limits_{\bm{w}}\sum_{i=1}^{m}(y_i-\bm{w}^{\textrm{T}}\bm{x}_i)^2+\lambda||\bm{w}||_1\]如此求解$\mathrm{L}_1$范数正则化的结果是得到了仅采用一部分初始特征的模型，即为一种嵌入式特征选择方法。
+						\item 可用近端梯度下降（PGD）求解。
+					\end{itemize}
+				\subsection{稀疏表示与字典学习}
+					\begin{itemize}
+						\item 稀疏矩阵：存在很多零元素的矩阵（不一定是整行整列）
+						\item 字典学习/稀疏编码：为普通稠密表达的样本找到合适的字典，将样本转化为合适的稀疏表示形式，简化学习任务，降低模型复杂度。
+						\item 字典学习最简形式：\[\min\limits_{\mathbf{B},\bm{\alpha}_i}\sum_{i=1}^{m}||\bm{x}_i-\mathbf{B}\bm{\alpha}_i||_2^2+\lambda\sum_{i=1}^{m}||\bm{\alpha}_i||_1\]
+						其中$\textbf{B}\in\mathbb{R}^{d\times k}$为字典矩阵，$k$为字典词汇量，$\bm{\alpha}_i\in\mathbb{R}^k$为样本$\bm{x}_i\in\mathbb{R}^d$的稀疏表示。第一项使$\bm{\alpha}_i$更好地重构$\bm{x}_i$，第二项使$\bm{\alpha}_i$尽量稀疏。
+						\item 求解方法：变量交替优化\begin{enumerate}
+							\item 先固定字典$\mathbf{B}$，按分量展开为\[\min\limits_{\bm{\alpha}_i}||\bm{x}_i-\mathbf{B}\bm{\alpha}_i||_2^2+\lambda||\bm{\alpha}_i||_1\]参照LASSO的解法求解。
+							\item 以$\bm{\alpha}_i$为初值来更新字典$\mathbf{B}$。目标函数化为\[\min\limits_{\mathbf{B}}||\mathbf{X}-\mathbf{BA}||_{F}^2\]其中$\mathbf{X}=(\bm{x}_1,\bm{x}_2,\dots,\bm{x}_m)\in\mathbb{R}^{d\times m}$，$A=(\bm{\alpha}_1,\bm{\alpha}_2,\dots,\bm{\alpha}_m)\in\mathbb{R}^{k\times m}$，$||\cdot||_F$是Frobenius范数。可用基于逐列更新策略的KSVD求解。
+						\end{enumerate}
+					\end{itemize}
+				\subsection{压缩感知}
+					\begin{itemize}
+						\item 压缩感知模型：假定有长度为$m$的离散信号$\bm{x}$，不妨假定以远小于奎奈斯特采样定理要求的采样率进行采样，得到长度为$n$的采样后信号$\bm{y}$，有$n\ll m$且$\bm{y}=\bm{\Phi x}$，其中$\Phi\in\mathbb{R}^{n\times m}$是对信号$\bm{x}$的测量矩阵。由$\bm{y}$和$\bm{\Phi}$反推$\bm{x}$，可令$\bm{x}=\bm{\Psi s}$，其中$\bm{s}$具有稀疏性。此时$\bm{\Psi}$为稀疏基，$\mathbf{A}=\bm{\Phi\Psi}$作用类似于字典。
+						\item 矩阵补全技术\begin{align*}
+							\min\limits_{\mathbf{X}}\quad & \mathrm{rank}(\mathbf{X}) \\
+							\mathrm{s.t.}\quad & (\mathbf{X})_{ij}=(\mathbf{A})_{ij},\quad (i,j)\in\Omega
+						\end{align*}
+						其中$\mathbf{X}$表示需要恢复的稀疏信号。$\Omega$是$\mathbf{A}$中有数据元素的下标集合。这是一个NP难问题。可转化最小化矩阵核范数再通过半正定规划求解。
+					\end{itemize}
 			\section{计算学习理论}
 			\section{半监督学习}
+				
 			\section{概率图模型}
 			\section{规则学习}
 			\section{强化学习}
